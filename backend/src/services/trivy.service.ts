@@ -150,20 +150,46 @@ class TrivyService {
 
         try {
             const severityFilter = severities.join(',');
-            const command = `trivy fs --server ${TRIVY_SERVER_URL} --severity ${severityFilter} --format json "${targetPath}"`;
 
-            const { stdout } = await execAsync(command, {
-                timeout: 300000,
+            // Convert Windows path to Docker-compatible path for volume mount
+            const dockerPath = targetPath.replace(/\\/g, '/');
+            const containerMountPath = '/scan-target';
+
+            // Use Docker to run Trivy scan with:
+            // - TRIVY_INSECURE=true to skip SSL verification (for corporate networks)
+            // - ghcr.io DB repository (more reliable than mirror.gcr.io)
+            // - Persistent cache volume for faster subsequent scans
+            // - ALL scanners: vuln, secret, misconfig, license (full comprehensive scan)
+            const command = `docker run --rm ` +
+                `-e TRIVY_INSECURE=true ` +
+                `-v trivy-cache:/root/.cache/ ` +
+                `-v "${dockerPath}:${containerMountPath}" ` +
+                `aquasec/trivy:latest fs ` +
+                `--scanners vuln,secret,misconfig,license ` +
+                `--db-repository ghcr.io/aquasecurity/trivy-db:2 ` +
+                `--java-db-repository ghcr.io/aquasecurity/trivy-java-db:1 ` +
+                `--severity ${severityFilter} --format json ${containerMountPath}`;
+
+            console.log(`🐳 Running Docker scan command...`);
+
+            const { stdout, stderr } = await execAsync(command, {
+                timeout: 600000, // 10 minutes
                 maxBuffer: 50 * 1024 * 1024
             });
+
+            if (stderr && !stderr.includes('INFO') && !stderr.includes('WARN') && !stderr.includes('Downloading')) {
+                console.warn('Trivy stderr:', stderr);
+            }
 
             const result = JSON.parse(stdout);
             return this.formatScanResult(result, 'filesystem', targetPath);
 
         } catch (error: any) {
+            console.error('❌ Filesystem scan error:', error.message);
             throw new Error(`Filesystem scan failed: ${error.message}`);
         }
     }
+
 
     /**
      * Scan Git repository for vulnerabilities
@@ -282,17 +308,20 @@ class TrivyService {
     }
 
     /**
-     * Format scan result with summary
+     * Format scan result with summary (counts all finding types)
      */
     private formatScanResult(rawResult: any, scanType: TrivyScanResponse['scanType'], target: string): TrivyScanResponse {
         const results: ScanResult[] = Array.isArray(rawResult.Results) ? rawResult.Results : [];
 
-        // Calculate summary
+        // Calculate summary for ALL finding types
         let critical = 0, high = 0, medium = 0, low = 0, unknown = 0;
+        const allSecrets: SecretFinding[] = [];
+        const allLicenses: LicenseFinding[] = [];
 
         results.forEach(result => {
+            // Count Vulnerabilities
             if (result.Vulnerabilities) {
-                result.Vulnerabilities.forEach(vuln => {
+                result.Vulnerabilities.forEach((vuln: Vulnerability) => {
                     switch (vuln.Severity) {
                         case 'CRITICAL': critical++; break;
                         case 'HIGH': high++; break;
@@ -302,7 +331,43 @@ class TrivyService {
                     }
                 });
             }
+
+            // Count Secrets
+            if (result.Secrets) {
+                result.Secrets.forEach((secret: any) => {
+                    allSecrets.push(secret);
+                    switch (secret.Severity) {
+                        case 'CRITICAL': critical++; break;
+                        case 'HIGH': high++; break;
+                        case 'MEDIUM': medium++; break;
+                        case 'LOW': low++; break;
+                        default: unknown++; break;
+                    }
+                });
+            }
+
+            // Count Misconfigurations
+            if (result.Misconfigurations) {
+                result.Misconfigurations.forEach((mc: any) => {
+                    switch (mc.Severity) {
+                        case 'CRITICAL': critical++; break;
+                        case 'HIGH': high++; break;
+                        case 'MEDIUM': medium++; break;
+                        case 'LOW': low++; break;
+                        default: unknown++; break;
+                    }
+                });
+            }
+
+            // Collect Licenses
+            if (result.Licenses) {
+                result.Licenses.forEach((lic: any) => {
+                    allLicenses.push(lic);
+                });
+            }
         });
+
+        console.log(`📊 Scan summary: Critical=${critical}, High=${high}, Medium=${medium}, Low=${low}, Secrets=${allSecrets.length}`);
 
         return {
             scanType,
@@ -316,7 +381,9 @@ class TrivyService {
                 low,
                 unknown,
                 total: critical + high + medium + low + unknown
-            }
+            },
+            secrets: allSecrets.length > 0 ? allSecrets : undefined,
+            licenses: allLicenses.length > 0 ? allLicenses : undefined,
         };
     }
 
@@ -492,11 +559,11 @@ class TrivyService {
     }
 
     /**
-     * Generate HTML report
+     * Generate HTML report with all findings (Vulnerabilities, Misconfigurations, Secrets)
      */
     generateHtmlReport(result: TrivyScanResponse): string {
         const getSeverityColor = (severity: string): string => {
-            switch (severity) {
+            switch (severity?.toUpperCase()) {
                 case 'CRITICAL': return '#ff0000';
                 case 'HIGH': return '#ff6600';
                 case 'MEDIUM': return '#ffaa00';
@@ -505,28 +572,54 @@ class TrivyService {
             }
         };
 
-        const vulnerabilityRows = result.results.flatMap(r =>
-            (r.Vulnerabilities || []).map(v => `
-                <tr>
-                    <td style="color: ${getSeverityColor(v.Severity)}; font-weight: bold;">${v.Severity}</td>
-                    <td>${v.VulnerabilityID}</td>
-                    <td>${v.PkgName}</td>
-                    <td>${v.InstalledVersion}</td>
-                    <td>${v.FixedVersion || '-'}</td>
-                    <td>${v.Title || '-'}</td>
-                </tr>
-            `)
-        ).join('');
+        // Collect all findings
+        const allVulnerabilities = result.results?.flatMap(r => r.Vulnerabilities || []) || [];
+        const allMisconfigurations = result.results?.flatMap(r => r.Misconfigurations || []) || [];
+        const allSecrets = result.secrets || result.results?.flatMap(r => r.Secrets || []) || [];
+
+        // Generate vulnerability rows
+        const vulnerabilityRows = allVulnerabilities.map(v => `
+            <tr>
+                <td style="color: ${getSeverityColor(v.Severity)}; font-weight: bold;">${v.Severity}</td>
+                <td><code>${v.VulnerabilityID}</code></td>
+                <td>${v.PkgName}</td>
+                <td>${v.InstalledVersion}</td>
+                <td style="color: ${v.FixedVersion ? '#00aa00' : '#888'};">${v.FixedVersion || '-'}</td>
+                <td>${v.Title || '-'}</td>
+            </tr>
+        `).join('');
+
+        // Generate misconfiguration rows
+        const misconfigRows = allMisconfigurations.map((mc: any) => `
+            <tr>
+                <td style="color: ${getSeverityColor(mc.Severity)}; font-weight: bold;">${mc.Severity}</td>
+                <td><code>${mc.ID || mc.AVDID || '-'}</code></td>
+                <td>${mc.Title || '-'}</td>
+                <td>${mc.Type || '-'}</td>
+                <td>${mc.Message || mc.Description || '-'}</td>
+            </tr>
+        `).join('');
+
+        // Generate secret rows
+        const secretRows = allSecrets.map((s: any) => `
+            <tr>
+                <td style="color: ${getSeverityColor(s.Severity)}; font-weight: bold;">${s.Severity}</td>
+                <td><code>${s.RuleID || '-'}</code></td>
+                <td>${s.Category || '-'}</td>
+                <td>${s.Title || '-'}</td>
+                <td>${s.StartLine || '-'}</td>
+            </tr>
+        `).join('');
 
         return `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Trivy Scan Report - ${result.target}</title>
+    <title>Trivy Scan Report - ${result.target || 'Security Scan'}</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #e0e0e0; padding: 20px; margin: 0; }
-        .container { max-width: 1200px; margin: 0 auto; background: #2d2d2d; border-radius: 12px; padding: 30px; }
+        .container { max-width: 1400px; margin: 0 auto; background: #2d2d2d; border-radius: 12px; padding: 30px; }
         .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #444; padding-bottom: 20px; }
         .header h1 { color: #4fc3f7; margin: 0 0 10px 0; }
         .summary { display: flex; justify-content: center; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
@@ -537,10 +630,14 @@ class TrivyService {
         .summary-item.low { background: #00aa0033; border: 1px solid #00aa00; }
         .summary-item .count { font-size: 32px; font-weight: bold; }
         .summary-item .label { font-size: 12px; color: #888; }
+        .section { margin: 30px 0; }
+        .section h2 { color: #4fc3f7; border-bottom: 1px solid #444; padding-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; margin: 20px 0; }
         th { background: #1a1a1a; padding: 12px; text-align: left; border-bottom: 2px solid #444; }
-        td { padding: 10px 12px; border-bottom: 1px solid #333; }
+        td { padding: 10px 12px; border-bottom: 1px solid #333; word-break: break-word; }
         tr:hover { background: #3d3d3d; }
+        code { background: #1a1a1a; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', monospace; }
+        .no-findings { text-align: center; padding: 20px; color: #00aa00; font-size: 16px; }
         .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #444; color: #666; font-size: 12px; }
     </style>
 </head>
@@ -548,45 +645,92 @@ class TrivyService {
     <div class="container">
         <div class="header">
             <h1>🛡️ Trivy Security Scan Report</h1>
-            <p>${result.target}</p>
-            <p style="color: #888; font-size: 12px;">Scan Type: ${result.scanType} | ${new Date(result.scanTime).toLocaleString('tr-TR')}</p>
+            <p>${result.target || 'Unknown Target'}</p>
+            <p style="color: #888; font-size: 12px;">Scan Type: ${result.scanType || 'TRIVY'} | ${result.scanTime ? new Date(result.scanTime).toLocaleString('tr-TR') : new Date().toLocaleString('tr-TR')}</p>
         </div>
 
         <div class="summary">
             <div class="summary-item critical">
-                <div class="count">${result.summary.critical}</div>
+                <div class="count">${result.summary?.critical || 0}</div>
                 <div class="label">CRITICAL</div>
             </div>
             <div class="summary-item high">
-                <div class="count">${result.summary.high}</div>
+                <div class="count">${result.summary?.high || 0}</div>
                 <div class="label">HIGH</div>
             </div>
             <div class="summary-item medium">
-                <div class="count">${result.summary.medium}</div>
+                <div class="count">${result.summary?.medium || 0}</div>
                 <div class="label">MEDIUM</div>
             </div>
             <div class="summary-item low">
-                <div class="count">${result.summary.low}</div>
+                <div class="count">${result.summary?.low || 0}</div>
                 <div class="label">LOW</div>
             </div>
         </div>
 
-        <h2>📋 Vulnerabilities (${result.summary.total})</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Severity</th>
-                    <th>CVE ID</th>
-                    <th>Package</th>
-                    <th>Installed</th>
-                    <th>Fixed</th>
-                    <th>Title</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${vulnerabilityRows || '<tr><td colspan="6" style="text-align: center;">No vulnerabilities found ✅</td></tr>'}
-            </tbody>
-        </table>
+        <!-- Vulnerabilities Section -->
+        <div class="section">
+            <h2>🐛 Vulnerabilities (${allVulnerabilities.length})</h2>
+            ${allVulnerabilities.length > 0 ? `
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Severity</th>
+                        <th style="width: 150px;">CVE ID</th>
+                        <th>Package</th>
+                        <th>Installed</th>
+                        <th>Fixed</th>
+                        <th>Title</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${vulnerabilityRows}
+                </tbody>
+            </table>
+            ` : '<p class="no-findings">✅ No vulnerabilities found</p>'}
+        </div>
+
+        <!-- Misconfigurations Section -->
+        <div class="section">
+            <h2>⚙️ Misconfigurations (${allMisconfigurations.length})</h2>
+            ${allMisconfigurations.length > 0 ? `
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Severity</th>
+                        <th style="width: 100px;">ID</th>
+                        <th>Title</th>
+                        <th style="width: 150px;">Type</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${misconfigRows}
+                </tbody>
+            </table>
+            ` : '<p class="no-findings">✅ No misconfigurations found</p>'}
+        </div>
+
+        <!-- Secrets Section -->
+        <div class="section">
+            <h2>🔐 Secrets (${allSecrets.length})</h2>
+            ${allSecrets.length > 0 ? `
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Severity</th>
+                        <th style="width: 150px;">Rule ID</th>
+                        <th>Category</th>
+                        <th>Title</th>
+                        <th style="width: 80px;">Line</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${secretRows}
+                </tbody>
+            </table>
+            ` : '<p class="no-findings">✅ No secrets found</p>'}
+        </div>
 
         <div class="footer">
             <p>Generated by İBB Güvenlik Tarama Platformu</p>

@@ -210,6 +210,7 @@ const TrivyScanner: React.FC = () => {
 
     // Flatten vulnerabilities from all results
     const allVulnerabilities = result?.results?.flatMap(r => r.Vulnerabilities || []) || [];
+    const allMisconfigurations = result?.results?.flatMap(r => r.Misconfigurations || []) || [];
 
     return (
         <Box sx={{ p: 3 }}>
@@ -498,7 +499,7 @@ const TrivyScanner: React.FC = () => {
                     )}
 
                     {/* No vulnerabilities message */}
-                    {allVulnerabilities.length === 0 && (
+                    {allVulnerabilities.length === 0 && (result.secrets?.length || 0) === 0 && (allMisconfigurations.length === 0) && (
                         <Card sx={{ mb: 3 }}>
                             <CardContent sx={{ textAlign: 'center', py: 4 }}>
                                 <CheckCircleIcon sx={{ fontSize: 60, color: '#00aa00', mb: 2 }} />
@@ -508,6 +509,106 @@ const TrivyScanner: React.FC = () => {
                                 <Typography variant="body2" color="text.secondary">
                                     Seçilen severity seviyelerinde hiç zafiyet tespit edilmedi.
                                 </Typography>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Secrets Table */}
+                    {(result.secrets?.length || 0) > 0 && (
+                        <Card sx={{ mb: 3 }}>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <SecretIcon color="warning" />
+                                    Bulunan Gizli Bilgiler (Secrets) ({result.secrets?.length || 0})
+                                </Typography>
+                                <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Severity</TableCell>
+                                                <TableCell>Rule ID</TableCell>
+                                                <TableCell>Category</TableCell>
+                                                <TableCell>Title</TableCell>
+                                                <TableCell>File</TableCell>
+                                                <TableCell>Line</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {result.secrets?.slice(0, 50).map((secret, idx) => (
+                                                <TableRow key={idx} hover>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={secret.Severity}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: `${getSeverityColor(secret.Severity)}22`,
+                                                                color: getSeverityColor(secret.Severity),
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ fontFamily: 'monospace' }}>{secret.RuleID}</TableCell>
+                                                    <TableCell>{secret.Category}</TableCell>
+                                                    <TableCell>{secret.Title}</TableCell>
+                                                    <TableCell sx={{ maxWidth: 200 }}>
+                                                        <Typography variant="body2" noWrap>{secret.Match || '-'}</Typography>
+                                                    </TableCell>
+                                                    <TableCell>{secret.StartLine}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Misconfigurations Table */}
+                    {allMisconfigurations.length > 0 && (
+                        <Card sx={{ mb: 3 }}>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <WarningIcon color="warning" />
+                                    Yapılandırma Hataları (Misconfigurations) ({allMisconfigurations.length})
+                                </Typography>
+                                <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Severity</TableCell>
+                                                <TableCell>ID</TableCell>
+                                                <TableCell>Title</TableCell>
+                                                <TableCell>Type</TableCell>
+                                                <TableCell>Message</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {allMisconfigurations.slice(0, 50).map((mc, idx) => (
+                                                <TableRow key={idx} hover>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={mc.Severity}
+                                                            size="small"
+                                                            sx={{
+                                                                bgcolor: `${getSeverityColor(mc.Severity)}22`,
+                                                                color: getSeverityColor(mc.Severity),
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ fontFamily: 'monospace' }}>{mc.ID || mc.AVDID}</TableCell>
+                                                    <TableCell>{mc.Title}</TableCell>
+                                                    <TableCell>{mc.Type}</TableCell>
+                                                    <TableCell sx={{ maxWidth: 300 }}>
+                                                        <Tooltip title={mc.Description || ''}>
+                                                            <Typography variant="body2" noWrap>{mc.Message || '-'}</Typography>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
                             </CardContent>
                         </Card>
                     )}
