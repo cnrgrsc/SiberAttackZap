@@ -1,0 +1,179 @@
+stages:
+  - build
+  - test
+  - security-scan
+  - deploy
+
+variables:
+  SIBERZED_API_URL: "http://your-siberzed-server:5002"
+  SIBERZED_API_KEY: "$SIBERZED_API_KEY"
+
+before_script:
+  - apk add --no-cache curl jq
+
+build:
+  stage: build
+  script:
+    - echo "🔨 Building application..."
+    - echo "Build completed successfully"
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 hour
+
+test:
+  stage: test
+  script:
+    - echo "🧪 Running tests..."
+    - echo "Tests completed successfully"
+
+security-scan:
+  stage: security-scan
+  image: curlimages/curl:latest
+  before_script:
+    - apk add --no-cache jq
+  script:
+    - |
+      echo "🔒 Starting security scan for $CI_PROJECT_NAME"
+      
+      # Start security scan
+      SCAN_RESPONSE=$(curl -s -X POST "$SIBERZED_API_URL/api/cicd/scan" \
+        -H "Content-Type: application/json" \
+        -H "X-API-Key: $SIBERZED_API_KEY" \
+        -d '{
+          "targetUrl": "'$TARGET_URL'",
+          "projectName": "'$CI_PROJECT_NAME'",
+          "branch": "'$CI_COMMIT_REF_NAME'",
+          "commitHash": "'$CI_COMMIT_SHA'",
+          "recipientEmails": ["'$SECURITY_EMAIL'", "'$DEV_TEAM_EMAIL'"]
+        }')
+      
+      echo "Scan Response: $SCAN_RESPONSE"
+      
+      # Extract scan ID
+      SCAN_ID=$(echo $SCAN_RESPONSE | jq -r '.data.scanId')
+      
+      if [ "$SCAN_ID" = "null" ] || [ -z "$SCAN_ID" ]; then
+        echo "❌ Failed to start security scan"
+        exit 1
+      fi
+      
+      echo "✅ Security scan started with ID: $SCAN_ID"
+      
+      # Wait for scan completion
+      TIMEOUT=1200  # 20 minutes timeout
+      ELAPSED=0
+      
+      while [ $ELAPSED -lt $TIMEOUT ]; do
+        STATUS_RESPONSE=$(curl -s "$SIBERZED_API_URL/api/cicd/scan/$SCAN_ID/status" \
+          -H "X-API-Key: $SIBERZED_API_KEY")
+        
+        STATUS=$(echo $STATUS_RESPONSE | jq -r '.data.status')
+        PROGRESS=$(echo $STATUS_RESPONSE | jq -r '.data.progress')
+        CRITICAL=$(echo $STATUS_RESPONSE | jq -r '.data.vulnerabilities.critical')
+        HIGH=$(echo $STATUS_RESPONSE | jq -r '.data.vulnerabilities.high')
+        TOTAL=$(echo $STATUS_RESPONSE | jq -r '.data.vulnerabilities.total')
+        
+        echo "📊 Scan Progress: $PROGRESS% | Status: $STATUS"
+        
+        if [ "$STATUS" = "COMPLETED" ]; then
+          echo "✅ Security scan completed successfully"
+          echo "📊 Vulnerability Summary:"
+          echo "   - Critical: $CRITICAL"
+          echo "   - High: $HIGH"
+          echo "   - Total: $TOTAL"
+          
+          # Security gate: Fail pipeline if critical vulnerabilities found
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ PIPELINE FAILED: $CRITICAL critical vulnerabilities detected!"
+            echo "🚨 Deployment blocked for security reasons"
+            exit 1
+          fi
+          
+          # Warning for high vulnerabilities
+          if [ "$HIGH" -gt 0 ]; then
+            echo "⚠️ WARNING: $HIGH high severity vulnerabilities detected"
+            echo "📋 Please review and address these issues"
+          fi
+          
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "🎉 No security vulnerabilities found - Safe to deploy!"
+          fi
+          
+          break
+        elif [ "$STATUS" = "FAILED" ]; then
+          echo "❌ Security scan failed"
+          exit 1
+        elif [ "$STATUS" = "CANCELLED" ]; then
+          echo "⚠️ Security scan was cancelled"
+          exit 1
+        fi
+        
+        sleep 30
+        ELAPSED=$((ELAPSED + 30))
+      done
+      
+      if [ $ELAPSED -ge $TIMEOUT ]; then
+        echo "❌ Security scan timeout after 20 minutes"
+        # Try to stop the scan
+        curl -s -X POST "$SIBERZED_API_URL/api/cicd/scan/$SCAN_ID/stop" \
+          -H "X-API-Key: $SIBERZED_API_KEY"
+        exit 1
+      fi
+  
+  artifacts:
+    reports:
+      junit: security-scan-results.xml
+    when: always
+  
+  only:
+    - main
+    - develop
+    - merge_requests
+  
+  except:
+    - tags
+
+# Advanced scan with custom options
+security-scan-advanced:
+  stage: security-scan
+  image: curlimages/curl:latest
+  script:
+    - |
+      # Advanced scan with custom options
+      SCAN_RESPONSE=$(curl -s -X POST "$SIBERZED_API_URL/api/cicd/scan" \
+        -H "Content-Type: application/json" \
+        -H "X-API-Key: $SIBERZED_API_KEY" \
+        -d '{
+          "targetUrl": "'$TARGET_URL'",
+          "projectName": "'$CI_PROJECT_NAME'",
+          "branch": "'$CI_COMMIT_REF_NAME'",
+          "commitHash": "'$CI_COMMIT_SHA'",
+          "recipientEmails": ["'$SECURITY_EMAIL'"],
+          "scanOptions": {
+            "enableSpider": true,
+            "enableAjaxSpider": true,
+            "enableActiveScan": true,
+            "spiderOptions": {
+              "maxChildren": 50
+            },
+            "activeScanOptions": {
+              "enabled": true
+            }
+          }
+        }')
+      
+      # Same monitoring logic as above...
+  
+  when: manual
+  allow_failure: false
+
+deploy:
+  stage: deploy
+  script:
+    - echo "🚀 Deploying application..."
+    - echo "Deployment completed successfully"
+  only:
+    - main
+  when: manual
+

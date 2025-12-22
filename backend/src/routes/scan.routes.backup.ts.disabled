@@ -1,0 +1,500 @@
+import { Router, Request, Response } from 'express';
+import Joi from 'joi';
+import { ScanService } from '../services/scan.service';
+import { ScanRequest } from '../types/api.types';
+import { ReportGeneratorService } from '../services/reportGenerator.service';
+import { notifyAdmins } from './notifications.routes';
+
+// Validation schemas
+const createScanSchema = Joi.object({
+  name: Joi.string().min(1).max(255).optional(),
+  targetUrl: Joi.string().uri().required(),
+  scanType: Joi.string().valid('AUTOMATED', 'MANUAL', 'BASELINE', 'FULL', 'API').required(),
+  config: Joi.object({
+    spiderMaxChildren: Joi.number().integer().min(0), // 0 = unlimited
+    activeScanMaxRuleDurationInMins: Joi.number().integer().min(0), // 0 = unlimited
+    activeScanMaxScanDurationInMins: Joi.number().integer().min(0), // 0 = unlimited
+    excludeUrls: Joi.array().items(Joi.string()),
+    includeUrls: Joi.array().items(Joi.string()),
+    recurse: Joi.boolean(),
+    inScopeOnly: Joi.boolean()
+  }).optional()
+});
+
+const automatedScanSchema = Joi.object({
+  name: Joi.string().min(1).max(255).optional(),
+  scanName: Joi.string().min(1).max(255).optional(),
+  targetUrl: Joi.string().uri().required(),
+  scanType: Joi.string().valid('AUTOMATED', 'MANUAL', 'BASELINE', 'FULL', 'API').optional(),
+  spiderOptions: Joi.object({
+    maxChildren: Joi.number().integer().min(0), // 0 = unlimited
+    recurse: Joi.boolean()
+  }).optional(),
+  activeScanOptions: Joi.object({
+    inScopeOnly: Joi.boolean()
+  }).optional(),
+  config: Joi.object({
+    spiderMaxChildren: Joi.number().integer().min(0), // 0 = unlimited
+    activeScanMaxRuleDurationInMins: Joi.number().integer().min(0), // 0 = unlimited
+    activeScanMaxScanDurationInMins: Joi.number().integer().min(0), // 0 = unlimited
+    excludeUrls: Joi.array().items(Joi.string()),
+    includeUrls: Joi.array().items(Joi.string()),
+    recurse: Joi.boolean(),
+    inScopeOnly: Joi.boolean()
+  }).optional()
+});
+
+// Factory function to create router with socket.io
+export function createScanRoutes(io?: any): Router {
+  const router = Router();
+  const scanService = new ScanService(io);
+
+  // GET /api/scans/statistics - Get scan statistics
+  router.get('/statistics', async (req: Request, res: Response) => {
+    try {
+      const statistics = await scanService.getScanStatistics();
+      res.json({
+        success: true,
+        data: statistics
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get scan statistics',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // GET /api/scans/statistics/overview - Get overview statistics
+  router.get('/statistics/overview', async (req: Request, res: Response) => {
+    try {
+      const statistics = await scanService.getScanStatistics();
+      res.json(statistics);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get scan statistics',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // POST /api/scans/automated - Create and start automated scan
+  router.post('/automated', async (req: Request, res: Response): Promise<void> => {
+    try {
+      console.log('Received automated scan request:', JSON.stringify(req.body, null, 2));
+      
+      const { error, value } = automatedScanSchema.validate(req.body);
+      if (error) {
+        res.status(400).json({
+          success: false,
+          error: {
+            message: 'Validation error',
+            details: error.details.map(d => d.message).join(', '),
+            receivedData: req.body
+          }
+        });
+        return;
+      }
+
+      // Create scan data with proper defaults
+      const scanData = {
+        name: value.name || value.scanName || `Automated scan of ${value.targetUrl}`,
+        targetUrl: value.targetUrl,
+        scanType: 'AUTOMATED',
+        environment: 'PRODUCTION', // Default environment for automated scans
+        config: {
+          spiderMaxChildren: value.spiderOptions?.maxChildren || value.config?.spiderMaxChildren || 10,
+          recurse: value.spiderOptions?.recurse || value.config?.recurse || true,
+          inScopeOnly: value.activeScanOptions?.inScopeOnly || value.config?.inScopeOnly || false,
+          excludeUrls: value.config?.excludeUrls || [],
+          includeUrls: value.config?.includeUrls || []
+        }
+      };
+
+      const scan = await scanService.createScan(scanData as ScanRequest);
+      
+      // Notify admins about new scan
+      await notifyAdmins({
+        type: 'SCAN_CREATED',
+        title: 'Yeni Tarama Başlatıldı',
+        message: `${scanData.name} taraması ${scanData.targetUrl} hedefi için başlatıldı`,
+        scanId: scan.id,
+        createdBy: (req as any).user?.id,
+        link: `/scan-history?scanId=${scan.id}`,
+        metadata: {
+          targetUrl: scanData.targetUrl,
+          scanType: 'AUTOMATED'
+        }
+      });
+      
+      // Start the scan immediately
+      const startedScan = await scanService.startAutomatedScan(scan.id);
+      
+      res.status(201).json({
+        success: true,
+        data: startedScan
+      });
+    } catch (error) {
+      console.error('Failed to create automated scan:', error);
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to create automated scan',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // GET /api/scans - Get all scans
+  router.get('/', async (req: Request, res: Response) => {
+    try {
+      const scans = await scanService.getAllScans();
+      res.json({
+        success: true,
+        data: scans
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get scans',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // GET /api/scans/:id - Get scan by ID
+  router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const scan = await scanService.getScanById(id);
+      
+      if (!scan) {
+        res.status(404).json({
+          success: false,
+          error: { message: 'Scan not found' }
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: scan
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get scan',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // POST /api/scans - Create new scan
+  router.post('/', async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { error, value } = createScanSchema.validate(req.body);
+      if (error) {
+        res.status(400).json({
+          success: false,
+          error: {
+            message: 'Validation error',
+            details: error.details.map(d => d.message).join(', ')
+          }
+        });
+        return;
+      }
+
+      const scan = await scanService.createScan(value as ScanRequest);
+      res.status(201).json({
+        success: true,
+        data: scan
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to create scan',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // POST /api/scans/:id/start - Start scan
+  router.post('/:id/start', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const scan = await scanService.startAutomatedScan(id);
+      
+      res.json({
+        success: true,
+        data: scan
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to start scan',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // GET /api/scans/:id/vulnerabilities - Get scan vulnerabilities
+  router.get('/:id/vulnerabilities', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const vulnerabilities = await scanService.getScanVulnerabilities(id);
+      
+      res.json({
+        success: true,
+        data: vulnerabilities
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get vulnerabilities',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // GET /api/scans/:id/data - Get scan data with deduplicated vulnerabilities
+  router.get('/:id/data', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const scan = await scanService.getScanById(id);
+      
+      if (!scan) {
+        res.status(404).json({
+          success: false,
+          error: { message: 'Scan not found' }
+        });
+        return;
+      }
+
+      // Get all vulnerabilities
+      const allVulnerabilities = await scanService.getScanVulnerabilities(id);
+      
+      // Deduplicate: Group by name and keep only unique ones
+      const uniqueVulns = new Map<string, any>();
+      allVulnerabilities.forEach(vuln => {
+        const key = vuln.name; // Group by vulnerability name only
+        if (!uniqueVulns.has(key)) {
+          uniqueVulns.set(key, {
+            ...vuln,
+            affectedUrls: [vuln.url] // Track all affected URLs
+          });
+        } else {
+          // Add URL to existing vulnerability
+          const existing = uniqueVulns.get(key);
+          if (vuln.url && !existing.affectedUrls.includes(vuln.url)) {
+            existing.affectedUrls.push(vuln.url);
+          }
+        }
+      });
+
+      const vulnerabilities = Array.from(uniqueVulns.values());
+
+      // Get scan URLs
+      const urls = await scanService.getScanUrls(id);
+
+      res.json({
+        success: true,
+        data: {
+          id: scan.id,
+          name: scan.name,
+          targetUrl: scan.targetUrl,
+          scanType: scan.scanType,
+          status: scan.status,
+          startedAt: scan.startedAt,
+          completedAt: scan.completedAt,
+          vulnerabilities: vulnerabilities,
+          urlsFound: urls,
+          totalVulnerabilities: vulnerabilities.length,
+          totalUrls: urls.length
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get scan data',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+  
+  // GET /api/scans/:id/report - Generate and return scan report
+  router.get('/:id/report', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const format = (req.query.format as string) || 'html';
+      
+      const report = await scanService.generateReport(id, format as any);
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', format === 'html' ? 'text/html' : 'application/json');
+      
+      res.send(report);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to generate report',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+  
+  // GET /api/scans/:id/report/download - Download scan report
+  router.get('/:id/report/download', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const format = (req.query.format as string) || 'html';
+      
+      // Get scan details for filename
+      const scan = await scanService.getScanById(id);
+      if (!scan) {
+        return res.status(404).json({
+          success: false,
+          error: { message: 'Scan not found' }
+        });
+      }
+      
+      const report = await scanService.generateReport(id, format as any);
+      
+      // Generate standardized filename
+      const fileName = format === 'html' 
+        ? ReportGeneratorService.generateFilename(scan.scanType, scan.targetUrl)
+        : `IBB_GuvenlikTaramasi_${new Date().toISOString().split('T')[0]}_${scan.scanType}.${format}`;
+      
+      // Set appropriate headers for download
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Type', format === 'html' ? 'text/html' : 'application/json');
+      
+      res.send(report);
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to generate report',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // DELETE /api/scans/:id - Delete scan
+  router.delete('/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      await scanService.deleteScan(id);
+      
+      res.json({
+        success: true,
+        data: { message: 'Scan deleted successfully' }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to delete scan',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // Get discovered URLs for a scan
+  router.get('/:id/urls', async (req: Request, res: Response) => {
+    try {
+      const scanId = req.params.id;
+      
+      const urls = await scanService.getScanUrls(scanId);
+      res.json({
+        success: true,
+        data: urls
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get scan URLs',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // PUT /api/scans/:id/status - Update scan status
+  router.put('/:id/status', async (req: Request, res: Response) => {
+    try {
+      const scanId = req.params.id;
+      const { status } = req.body;
+      
+      if (!['COMPLETED', 'FAILED', 'CANCELLED', 'RUNNING'].includes(status)) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Invalid status. Must be one of: COMPLETED, FAILED, CANCELLED, RUNNING' }
+        });
+      }
+      
+      const updatedScan = await scanService.updateScanStatus(scanId, status);
+      res.json({
+        success: true,
+        data: updatedScan
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to update scan status',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // Get scan details (URLs + vulnerabilities)
+  router.get('/:id/details', async (req: Request, res: Response) => {
+    try {
+      const scanId = req.params.id;
+      
+      const details = await scanService.getScanDetails(scanId);
+      res.json({
+        success: true,
+        data: details
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          message: 'Failed to get scan details',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  return router;
+}
+
+// Default export for backward compatibility
+export default createScanRoutes();

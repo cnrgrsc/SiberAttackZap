@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  zaproxy:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    container_name: zap-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    command:
+      - zap.sh
+      - -daemon
+      - -host
+      - 0.0.0.0
+      - -port
+      - "8080"
+      - -config
+      - api.disablekey=true
+      - -config
+      - api.addrs.addr.name=.*
+      - -config
+      - api.addrs.addr.regex=true
+    volumes:
+      - zap-data:/zap/data
+      - zap-reports:/zap/reports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/JSON/core/view/version/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  zap-data:
+  zap-reports:

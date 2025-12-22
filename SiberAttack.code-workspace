@@ -1,0 +1,61 @@
+{
+  "folders": [
+    {
+      "name": "🚀 IBB SiberZed",
+      "path": "."
+    },
+    {
+      "name": "🔧 Backend",
+      "path": "./backend"
+    },
+    {
+      "name": "🎨 Frontend", 
+      "path": "./frontend"
+    }
+  ],
+  "settings": {
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "files.associations": {
+      "*.env*": "properties"
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.git": true
+    },
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.git": true
+    },
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "emmet.includeLanguages": {
+      "typescript": "html",
+      "typescriptreact": "html"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-json",
+      "ms-vscode.powershell",
+      "ms-vscode-remote.remote-containers",
+      "prisma.prisma",
+      "esbenp.prettier-vscode"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "options": {
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  }
+}

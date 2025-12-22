@@ -1,0 +1,435 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AccessRequest {
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String
+  department    String
+  reason        String
+  requestedRole String
+  status        String    @default("pending")
+  requestDate   DateTime  @default(now())
+  reviewedBy    String?
+  reviewDate    DateTime?
+  reviewNotes   String?
+
+  @@map("access_requests")
+}
+
+model User {
+  id               String           @id @default(cuid())
+  username         String           @unique
+  firstName        String
+  lastName         String
+  email            String           @unique
+  role             String           @default("developer")
+  department       String?
+  isActive         Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  lastLogin        DateTime?
+  createdBy        String?
+  ldapVerified     Boolean          @default(false)
+  auditLogs        AuditLog[]       @relation("UserActions")
+  emailPreference  EmailPreference?
+  groupMemberships GroupMember[]
+  createdScans     Scan[]           @relation("CreatedBy")
+  userRoles        UserRole[]
+
+  @@map("users")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User     @relation("UserActions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+model Scan {
+  id               String          @id @default(cuid())
+  name             String
+  targetUrl        String
+  scanType         String          @default("AUTOMATED")
+  status           String          @default("PENDING")
+  startedAt        DateTime        @default(now())
+  completedAt      DateTime?
+  createdBy        String?
+  zapScanId        String?
+  zapSessionId     String?
+  createdAt        DateTime        @default(now())
+  workflowId       String?
+  advancedAnalysis Json?
+  apiSecurity      Json?
+  jsSecurity       Json?
+  metadata         Json?
+  aggressiveness   String?         @default("MEDIUM")
+  environment      String?         @default("TEST")
+  reportSettings   Json?
+  safeMode         Boolean         @default(false)
+  scanConfig       Json?
+  queuePosition    Int?
+  queuePriority    Int?            @default(5)
+  queuedAt         DateTime?
+  mobileAppScan    MobileAppScan?
+  notifications    Notification[]
+  reports          Report[]
+  scanQueue        ScanQueue?
+  scanUrls         ScanUrl[]
+  creator          User?           @relation("CreatedBy", fields: [createdBy], references: [id])
+  vulnerabilities  Vulnerability[]
+
+  @@map("scans")
+}
+
+model Vulnerability {
+  id            String  @id @default(cuid())
+  scanId        String
+  name          String
+  description   String?
+  severity      String  @default("LOW")
+  confidence    String?
+  solution      String?
+  reference     String?
+  zapAlertId    String?
+  url           String?
+  param         String?
+  attack        String?
+  evidence      String?
+  affectedUrl   String?
+  cvssScore     Float?
+  cweId         String?
+  cweid         String?
+  mobsfType     String?
+  otherInfo     String?
+  owaspCategory String?
+  wascid        String?
+  scan          Scan    @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@map("vulnerabilities")
+}
+
+model ScanUrl {
+  id           String   @id @default(cuid())
+  scanId       String
+  url          String
+  method       String   @default("GET")
+  statusCode   Int?
+  responseTime Int?
+  contentType  String?
+  size         Int?
+  timestamp    DateTime @default(now())
+  scan         Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@map("scan_urls")
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  scanId    String
+  type      String   @default("HTML")
+  format    String
+  content   String?
+  filePath  String?
+  createdAt DateTime @default(now())
+  scan      Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model ScanTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  config      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("scan_templates")
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  name      String
+  keyHash   String    @unique
+  createdAt DateTime  @default(now())
+  lastUsed  DateTime?
+  isActive  Boolean   @default(true)
+
+  @@map("api_keys")
+}
+
+model MobileAppScan {
+  id            String   @id @default(cuid())
+  scanId        String   @unique
+  hash          String
+  appName       String
+  packageName   String
+  version       String
+  platform      String
+  fileSize      Int
+  securityScore Float    @default(0)
+  permissions   Json
+  trackers      Json
+  domains       Json
+  urls          Json
+  emails        Json
+  mobsfVersion  String?
+  analysisDate  DateTime @default(now())
+  scan          Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@map("mobile_app_scans")
+}
+
+model SystemSettings {
+  id          String   @id @default(cuid())
+  category    String
+  key         String
+  value       String
+  description String?
+  isEncrypted Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@unique([category, key])
+  @@map("system_settings")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  displayName String
+  description String?
+  isSystem    Boolean          @default(false)
+  createdBy   String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  groups      GroupRole[]
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  category    PermissionCategory
+  displayName String
+  description String?
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  grantedBy    String
+  grantedAt    DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id         String    @id @default(cuid())
+  userId     String
+  roleId     String
+  assignedBy String
+  assignedAt DateTime  @default(now())
+  expiresAt  DateTime?
+  role       Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model Group {
+  id                  String        @id @default(cuid())
+  name                String        @unique
+  displayName         String
+  description         String?
+  createdBy           String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  emailEnabled        Boolean       @default(true)
+  emailOnScanComplete Boolean       @default(true)
+  emailOnVulnFound    Boolean       @default(false)
+  emailOnVulnCritical Boolean       @default(true)
+  emailOnVulnHigh     Boolean       @default(true)
+  members             GroupMember[]
+  roles               GroupRole[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id      String   @id @default(cuid())
+  groupId String
+  userId  String
+  addedBy String
+  addedAt DateTime @default(now())
+  group   Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model GroupRole {
+  id         String   @id @default(cuid())
+  groupId    String
+  roleId     String
+  assignedBy String
+  assignedAt DateTime @default(now())
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, roleId])
+  @@map("group_roles")
+}
+
+model EmailPreference {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  emailEnabled  Boolean @default(true)
+  scanStarted   Boolean @default(false)
+  scanCompleted Boolean @default(true)
+  scanFailed    Boolean @default(true)
+  scanPaused    Boolean @default(false)
+  vulnCritical  Boolean @default(true)
+  vulnHigh      Boolean @default(true)
+  vulnMedium    Boolean @default(false)
+  vulnLow       Boolean @default(false)
+  vulnInfo      Boolean @default(false)
+  systemAlerts  Boolean @default(true)
+  weeklyReport  Boolean @default(true)
+  monthlyReport Boolean @default(false)
+  dailyDigest   Boolean @default(false)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_preferences")
+}
+
+model EmailLog {
+  id       String      @id @default(cuid())
+  to       String[]
+  cc       String[]
+  bcc      String[]
+  subject  String
+  body     String
+  template String?
+  sentBy   String
+  sentAt   DateTime    @default(now())
+  status   EmailStatus @default(QUEUED)
+  error    String?
+  scanId   String?
+  groupId  String?
+  metadata Json?
+
+  @@map("email_logs")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  scanId    String?
+  createdBy String?
+  metadata  Json?
+  scan      Scan?            @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model ScanQueue {
+  id             String    @id @default(cuid())
+  scanId         String    @unique
+  priority       Int       @default(5)
+  addedAt        DateTime  @default(now())
+  estimatedStart DateTime?
+  scan           Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@index([priority, addedAt])
+  @@map("scan_queue")
+}
+
+enum PermissionCategory {
+  USER_MANAGEMENT
+  ROLE_MANAGEMENT
+  GROUP_MANAGEMENT
+  SCAN_MANAGEMENT
+  REPORT_MANAGEMENT
+  VULNERABILITY_MANAGEMENT
+  EMAIL_MANAGEMENT
+  SYSTEM_MANAGEMENT
+  API_MANAGEMENT
+  DASHBOARD_MANAGEMENT
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+  BOUNCED
+  REJECTED
+}
+
+enum NotificationType {
+  SCAN_CREATED
+  SCAN_COMPLETED
+  SCAN_FAILED
+  SCAN_PAUSED
+  VULNERABILITY_CRITICAL
+  VULNERABILITY_HIGH
+  SYSTEM_ALERT
+  GROUP_ACTIVITY
+  USER_ACTIVITY
+  SCAN_QUEUED
+  SCAN_DEQUEUED
+}
+
+model GitRepository {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  repoUrl         String
+  username        String
+  encryptedToken  String
+  branch          String?  @default("main")
+  lastUsed        DateTime @default(now())
+  scanCount       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, repoUrl])
+  @@map("git_repositories")
+}

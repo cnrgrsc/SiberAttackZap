@@ -1,0 +1,182 @@
+services:
+  backend:
+    image: siberattack-backend:latest
+    container_name: siberzed-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${BACKEND_PORT:-5001}
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://10.5.63.219:5002}
+      NODE_OPTIONS: "--max-old-space-size=768"
+      ZAP_PROXY_URL: ${ZAP_PROXY_URL:-http://10.5.63.219:8080}
+      MOBSF_BASE_URL: ${MOBSF_BASE_URL:-http://10.5.63.219:5003}
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+      - ./data/zap-reports:/app/zap-reports
+    networks:
+      - siberzed-network
+    dns:
+      - 10.1.9.2
+      - 10.5.55.14
+      - 8.8.8.8
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      zaproxy:
+        condition: service_healthy
+      mobsf:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    image: siberattack-frontend:latest
+    container_name: siberzed-frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "5002:5002"
+    depends_on:
+      - backend
+    networks:
+      - siberzed-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  zaproxy:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    # image: repo.ibb.gov.tr/repository/docker-hub/zaproxy/zaproxy:stable
+    container_name: zap-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    command:
+      - zap.sh
+      - -daemon
+      - -host
+      - 0.0.0.0
+      - -port
+      - "8080"
+      - -config
+      - api.disablekey=true
+      - -config
+      - api.addrs.addr.name=.*
+      - -config
+      - api.addrs.addr.regex=true
+      - -addoninstall
+      - technology
+      - -addoninstall
+      - wappalyzer
+      - -addoninstall
+      - pscanrulesBeta
+      - -addoninstall
+      - ascanrulesBeta
+      - -addoninstall
+      - spiderAjax
+      - -addoninstall
+      - graphql
+      - -addoninstall
+      - openapi
+    volumes:
+      - zap-data:/zap/data
+      - zap-reports:/zap/reports
+      - ./data/zap:/zap/wrk
+      - ./zap-init.sh:/zap/zap-init.sh:ro
+    networks:
+      - siberzed-network
+    healthcheck:
+      test: 
+        - CMD
+        - sh
+        - -c
+        - |
+          curl -f --max-time 10 "http://localhost:8080/JSON/core/view/version/" &&
+          (curl -f --max-time 10 "http://localhost:8080/JSON/wappalyzer/view/listSites/" 2>/dev/null | grep -q "listSites" || echo "Wappalyzer loading...")
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+
+  mobsf:
+    image: opensecurity/mobile-security-framework-mobsf:latest
+    container_name: mobsf
+    restart: unless-stopped
+    ports:
+      - "5003:8000"
+    volumes:
+      - mobsf_data:/home/mobsf/.MobSF
+      - ./data/mobsf:/home/mobsf/uploads
+      - /tmp:/tmp
+    environment:
+      - MOBSF_PLATFORM=docker
+    networks:
+      - siberzed-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  trivy-server:
+    image: aquasec/trivy:latest
+    container_name: trivy-server
+    restart: unless-stopped
+    ports:
+      - "5004:5004"
+    environment:
+      # DB güncellemelerini çalıştır (ilk kurulum)
+      - TRIVY_CACHE_DIR=/root/.cache/trivy
+      - TRIVY_INSECURE=true
+      - TRIVY_TIMEOUT=10m
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - NO_PROXY=
+    # Container entrypoint override - sleep infinity kullan
+    entrypoint: ["/bin/sh"]
+    command: ["-c", "sleep infinity"]
+    volumes:
+      # Offline DB cache - sunucuya kopyaladığınız DB buraya mount edilecek
+      - ./data/trivy-cache:/root/.cache/trivy
+      - ./data/trivy:/trivy/reports
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - siberzed-network
+    healthcheck:
+      test: ["CMD", "trivy", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+networks:
+  siberzed-network:
+    driver: bridge
+    name: siberzed-network
+
+volumes:
+  zap-data:
+  zap-reports:
+  mobsf_data:
+    driver: local
+  trivy-cache:
+    driver: local

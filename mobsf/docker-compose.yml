@@ -1,0 +1,22 @@
+services:
+  mobsf:
+    image: opensecurity/mobile-security-framework-mobsf:latest
+    container_name: mobsf
+    restart: unless-stopped
+    ports:
+      - "5003:8000"
+    volumes:
+      - mobsf_data:/home/mobsf/.MobSF
+      - /tmp:/tmp
+    environment:
+      - MOBSF_PLATFORM=docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mobsf_data:
+    driver: local

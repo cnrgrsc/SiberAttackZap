@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "scans" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "metadata" TEXT,
+ADD COLUMN     "workflowId" TEXT;

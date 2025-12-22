@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İBB Güvenlik Tarama Raporu - Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+        
+        /* HEADER */
+        .header { 
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
+            color: white; 
+            padding: 40px 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        .header-content { position: relative; z-index: 1; }
+        .header h1 { 
+            font-size: 2.8em; 
+            margin-bottom: 15px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle { 
+            font-size: 1.3em; 
+            opacity: 0.95;
+            margin-bottom: 10px;
+        }
+        .header .meta { 
+            opacity: 0.85; 
+            font-size: 0.95em;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        /* SUMMARY SECTION */
+        .summary { 
+            padding: 50px;
+            background: linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%);
+        }
+        .summary h2 { 
+            font-size: 2em; 
+            color: #1e3c72;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .summary-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 25px; 
+            margin: 30px 0;
+        }
+        .summary-card { 
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #2196F3;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .summary-card h3 { 
+            font-size: 0.95em;
+            color: #666;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .summary-card .number { 
+            font-size: 2.5em; 
+            font-weight: bold; 
+            color: #2196F3;
+            line-height: 1;
+        }
+        .summary-card .label {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 8px;
+        }
+        
+        /* SEVERITY CHART */
+        .severity-section {
+            margin-top: 50px;
+        }
+        .severity-section h3 {
+            font-size: 1.5em;
+            color: #1e3c72;
+            margin-bottom: 25px;
+        }
+        .severity-chart { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 20px;
+        }
+        .severity-item { 
+            text-align: center; 
+            padding: 25px 20px;
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .severity-item:hover {
+            transform: scale(1.05);
+        }
+        .severity-item .count {
+            font-size: 3em;
+            font-weight: bold;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        .severity-item .label {
+            font-size: 1.1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* VULNERABILITIES SECTION */
+        .vulnerabilities { 
+            padding: 50px;
+            background: #f8f9fa;
+        }
+        .vulnerabilities h2 {
+            font-size: 2em;
+            color: #1e3c72;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .vuln-item { 
+            margin: 25px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            background: white;
+            transition: box-shadow 0.2s;
+        }
+        .vuln-item:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .vuln-header { 
+            padding: 25px 30px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .vuln-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        .vuln-details { 
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            background: #f9fafb;
+        }
+        .vuln-details.show { 
+            max-height: 2000px;
+            padding: 30px;
+        }
+        .severity-badge { 
+            padding: 8px 16px;
+            border-radius: 25px;
+            color: white;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 90px;
+            text-align: center;
+        }
+        .vuln-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+        .toggle-btn { 
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+            transition: transform 0.2s;
+            padding: 5px 10px;
+        }
+        .info-grid { 
+            display: grid;
+            gap: 25px;
+        }
+        .info-item { 
+            margin: 15px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        .info-item strong { 
+            color: #1e3c72;
+            font-size: 1.05em;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .info-item p {
+            color: #555;
+            line-height: 1.7;
+        }
+        .info-item code {
+            background: #f0f2f5;
+            padding: 15px;
+            border-radius: 6px;
+            display: block;
+            margin-top: 10px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        .no-vulns { 
+            text-align: center;
+            padding: 80px 40px;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .no-vulns h3 {
+            font-size: 2em;
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+        .no-vulns p {
+            font-size: 1.2em;
+            color: #558b2f;
+        }
+        
+        /* FOOTER */
+        .footer { 
+            background: #1e3c72;
+            color: white;
+            padding: 40px 50px;
+            text-align: center;
+        }
+        .footer p { 
+            margin: 8px 0;
+            opacity: 0.9;
+        }
+        .footer .copyright {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.9em;
+        }
+        
+        /* PRINT STYLES */
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+            .vuln-details { max-height: none !important; display: block !important; }
+            .toggle-btn { display: none; }
+            .vuln-header { cursor: default; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-content">
+                <h1>🌐 İBB Güvenlik Tarama Raporu</h1>
+                <div class="subtitle">Web Uygulaması Taraması</div>
+                <div class="subtitle" style="font-size: 1.1em; margin-top: 10px;">
+                    <strong>test.example.com</strong>
+                </div>
+                <div class="meta">
+                    <div><strong>Rapor Tarihi:</strong> 17 Ekim 2025 14:30</div>
+                    <div><strong>Hedef URL:</strong> https://test.example.com/</div>
+                    <div><strong>Tarama Süresi:</strong> 5 dakika 30 saniye</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="summary">
+            <h2>📊 Tarama Özeti</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Tarama Türü</h3>
+                    <div class="number">🌐</div>
+                    <div class="label">Web Uygulaması Taraması</div>
+                </div>
+                <div class="summary-card" style="border-left-color: #f44336;">
+                    <h3>Toplam Zafiyet</h3>
+                    <div class="number" style="color: #f44336;">0</div>
+                    <div class="label">Tespit Edildi</div>
+                </div>
+                <div class="summary-card" style="border-left-color: #d32f2f;">
+                    <h3>Kritik & Yüksek Risk</h3>
+                    <div class="number" style="color: #d32f2f;">0</div>
+                    <div class="label">Öncelikli Düzeltme</div>
+                </div>
+                <div class="summary-card" style="border-left-color: #4caf50;">
+                    <h3>Güvenlik Skoru</h3>
+                    <div class="number" style="color: #4caf50;">
+                        100
+                    </div>
+                    <div class="label">/ 100</div>
+                </div>
+            </div>
+
+            <!-- SEVERITY DISTRIBUTION -->
+            <div class="severity-section">
+                <h3>🎯 Zafiyet Dağılımı (Önem Derecesine Göre)</h3>
+                <div class="severity-chart">
+                    <div class="severity-item" style="background: linear-gradient(135deg, #b71c1c 0%, #8b0000 100%);">
+                        <div class="count">0</div>
+                        <div class="label">KRİTİK</div>
+                    </div>
+                    <div class="severity-item" style="background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);">
+                        <div class="count">0</div>
+                        <div class="label">YÜKSEK</div>
+                    </div>
+                    <div class="severity-item" style="background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);">
+                        <div class="count">0</div>
+                        <div class="label">ORTA</div>
+                    </div>
+                    <div class="severity-item" style="background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);">
+                        <div class="count">0</div>
+                        <div class="label">DÜŞÜK</div>
+                    </div>
+                    <div class="severity-item" style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);">
+                        <div class="count">0</div>
+                        <div class="label">BİLGİ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VULNERABILITIES -->
+        <div class="vulnerabilities">
+            <h2>🔍 Tespit Edilen Zafiyetler</h2>
+            
+            <div class="no-vulns">
+                <h3>✅ Tebrikler!</h3>
+                <p>Bu taramada herhangi bir güvenlik zafiyeti tespit edilmedi.</p>
+                <p style="margin-top: 15px; font-size: 1em;">Sistemleriniz temel güvenlik kontrollerinden başarıyla geçti.</p>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <p><strong>İstanbul Büyükşehir Belediyesi</strong></p>
+            <p>Bilgi İşlem Daire Başkanlığı - Siber Güvenlik Birimi</p>
+            <p>Güvenlik Test Platformu v2.0</p>
+            <div class="copyright">
+                <p>© 2025 İstanbul Büyükşehir Belediyesi. Tüm hakları saklıdır.</p>
+                <p style="font-size: 0.85em; opacity: 0.8; margin-top: 10px;">
+                    Bu rapor 17 Ekim 2025 14:30 tarihinde otomatik olarak oluşturulmuştur.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleDetails(index) {
+            const details = document.getElementById('details-' + index);
+            const btn = document.getElementById('btn-' + index);
+            
+            if (details.classList.contains('show')) {
+                details.classList.remove('show');
+                btn.textContent = '▼';
+                btn.setAttribute('aria-expanded', 'false');
+            } else {
+                details.classList.add('show');
+                btn.textContent = '▲';
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        }
+        
+        // Print functionality
+        function printReport() {
+            window.print();
+        }
+        
+        // Expand all for printing
+        window.addEventListener('beforeprint', function() {
+            document.querySelectorAll('.vuln-details').forEach(el => {
+                el.classList.add('show');
+            });
+        });
+    </script>
+</body>
+</html>
