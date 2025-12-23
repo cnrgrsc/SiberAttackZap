@@ -24,22 +24,17 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
-  Tooltip,
-  Divider
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
   Security as SecurityIcon,
   Api as ApiIcon,
   Shield as ShieldIcon,
-  Lock as LockIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Info as InfoIcon,
   Speed as SpeedIcon,
-  Visibility as VisibilityIcon,
   VpnLock as VpnLockIcon,
   Code as CodeIcon,
   Assessment as AssessmentIcon,
@@ -48,8 +43,7 @@ import {
   CleaningServices as CleaningServicesIcon,
   PriorityHigh as PriorityHighIcon,
   Timeline as TimelineIcon,
-  Assignment as AssignmentIcon,
-  BugReport as BugReportIcon
+  BugReport as BugReportIcon,
 } from '@mui/icons-material';
 
 const ApiSecurityDeepDive: React.FC = () => {
@@ -66,7 +60,7 @@ const ApiSecurityDeepDive: React.FC = () => {
 
     setLoading(true);
     setError(null);
-    
+
     try {
       const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
       const response = await fetch(`${API_BASE_URL}/api/zap-advanced/api-security-deep-dive`, {
@@ -82,7 +76,7 @@ const ApiSecurityDeepDive: React.FC = () => {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         setDeepDiveResult(data);
       } else {
@@ -117,7 +111,7 @@ const ApiSecurityDeepDive: React.FC = () => {
       <Typography variant="h4" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
         🔍 API Security Deep Dive
       </Typography>
-      
+
       <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
         Kapsamlı API güvenlik analizi - 10 farklı güvenlik kategorisin derinlemesine incelemesi
       </Typography>
@@ -135,7 +129,7 @@ const ApiSecurityDeepDive: React.FC = () => {
               helperText="Analiz edilecek API'nin base URL'sini girin"
               disabled={loading}
             />
-            
+
             <Button
               variant="contained"
               onClick={handleDeepDive}
@@ -194,12 +188,12 @@ const ApiSecurityDeepDive: React.FC = () => {
 
             <Card sx={{ minWidth: 200, flex: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <AssessmentIcon 
-                  color={getSecurityScoreColor(deepDiveResult.summary?.securityScore || 0)} 
-                  sx={{ fontSize: 40, mb: 1 }} 
+                <AssessmentIcon
+                  color={getSecurityScoreColor(deepDiveResult.summary?.securityScore || 0)}
+                  sx={{ fontSize: 40, mb: 1 }}
                 />
-                <Typography 
-                  variant="h4" 
+                <Typography
+                  variant="h4"
                   color={getSecurityScoreColor(deepDiveResult.summary?.securityScore || 0) + '.main'}
                 >
                   {deepDiveResult.summary?.securityScore || 0}/100
@@ -210,7 +204,7 @@ const ApiSecurityDeepDive: React.FC = () => {
 
             <Card sx={{ minWidth: 200, flex: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Chip 
+                <Chip
                   label={deepDiveResult.summary?.riskLevel || 'Unknown'}
                   color={getRiskColor(deepDiveResult.summary?.riskLevel)}
                   sx={{ fontSize: '1.1rem', p: 2, height: 40 }}
@@ -330,14 +324,14 @@ const ApiSecurityDeepDive: React.FC = () => {
                           <List dense>
                             {deepDiveResult.deepDive.analysis.technologyDetection.webServers.map((server: any, index: number) => (
                               <ListItem key={index}>
-                                <ListItemText 
+                                <ListItemText
                                   primary={server.server}
                                   secondary={`Confidence: ${server.confidence}`}
                                 />
-                                <Chip 
-                                  label={server.confidence} 
-                                  size="small" 
-                                  color={server.confidence === 'High' ? 'success' : 'warning'} 
+                                <Chip
+                                  label={server.confidence}
+                                  size="small"
+                                  color={server.confidence === 'High' ? 'success' : 'warning'}
                                 />
                               </ListItem>
                             ))}
@@ -356,14 +350,14 @@ const ApiSecurityDeepDive: React.FC = () => {
                           <List dense>
                             {deepDiveResult.deepDive.analysis.technologyDetection.programmingLanguages.map((lang: any, index: number) => (
                               <ListItem key={index}>
-                                <ListItemText 
+                                <ListItemText
                                   primary={lang.name}
                                   secondary={`Method: ${lang.detectionMethod}`}
                                 />
-                                <Chip 
-                                  label={lang.confidence} 
-                                  size="small" 
-                                  color={lang.confidence === 'High' ? 'success' : 'warning'} 
+                                <Chip
+                                  label={lang.confidence}
+                                  size="small"
+                                  color={lang.confidence === 'High' ? 'success' : 'warning'}
                                 />
                               </ListItem>
                             ))}
@@ -382,14 +376,14 @@ const ApiSecurityDeepDive: React.FC = () => {
                           <List dense>
                             {deepDiveResult.deepDive.analysis.technologyDetection.databases.map((db: any, index: number) => (
                               <ListItem key={index}>
-                                <ListItemText 
+                                <ListItemText
                                   primary={db.name}
                                   secondary={`Method: ${db.detectionMethod}`}
                                 />
-                                <Chip 
-                                  label={db.confidence} 
-                                  size="small" 
-                                  color={db.confidence === 'High' ? 'error' : 'warning'} 
+                                <Chip
+                                  label={db.confidence}
+                                  size="small"
+                                  color={db.confidence === 'High' ? 'error' : 'warning'}
                                 />
                               </ListItem>
                             ))}
@@ -408,14 +402,14 @@ const ApiSecurityDeepDive: React.FC = () => {
                           <List dense>
                             {deepDiveResult.deepDive.analysis.technologyDetection.jsLibraries.map((lib: any, index: number) => (
                               <ListItem key={index}>
-                                <ListItemText 
+                                <ListItemText
                                   primary={lib.name}
                                   secondary={`Method: ${lib.detectionMethod}`}
                                 />
-                                <Chip 
-                                  label={lib.confidence} 
-                                  size="small" 
-                                  color={lib.confidence === 'High' ? 'success' : 'info'} 
+                                <Chip
+                                  label={lib.confidence}
+                                  size="small"
+                                  color={lib.confidence === 'High' ? 'success' : 'info'}
                                 />
                               </ListItem>
                             ))}
@@ -434,7 +428,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                           <List dense>
                             {deepDiveResult.deepDive.analysis.technologyDetection.versionInformation.webServer && (
                               <ListItem>
-                                <ListItemText 
+                                <ListItemText
                                   primary={`${deepDiveResult.deepDive.analysis.technologyDetection.versionInformation.webServer.name} ${deepDiveResult.deepDive.analysis.technologyDetection.versionInformation.webServer.version}`}
                                   secondary="Web Server"
                                 />
@@ -442,7 +436,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             )}
                             {deepDiveResult.deepDive.analysis.technologyDetection.versionInformation.framework && (
                               <ListItem>
-                                <ListItemText 
+                                <ListItemText
                                   primary={`${deepDiveResult.deepDive.analysis.technologyDetection.versionInformation.framework.name} ${deepDiveResult.deepDive.analysis.technologyDetection.versionInformation.framework.version}`}
                                   secondary="Framework"
                                 />
@@ -463,7 +457,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                           <List dense>
                             {deepDiveResult.deepDive.analysis.technologyDetection.vulnerableTechnologies.map((vuln: any, index: number) => (
                               <ListItem key={index}>
-                                <ListItemText 
+                                <ListItemText
                                   primary={vuln.technology}
                                   secondary={
                                     <Box>
@@ -476,10 +470,10 @@ const ApiSecurityDeepDive: React.FC = () => {
                                     </Box>
                                   }
                                 />
-                                <Chip 
-                                  label={vuln.severity} 
-                                  size="small" 
-                                  color="error" 
+                                <Chip
+                                  label={vuln.severity}
+                                  size="small"
+                                  color="error"
                                 />
                               </ListItem>
                             ))}
@@ -498,7 +492,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                           {Object.entries(deepDiveResult.deepDive.analysis.technologyDetection.securityHeaders).map(([header, present]: [string, any]) => (
-                            <Chip 
+                            <Chip
                               key={header}
                               label={header.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                               color={present ? 'success' : 'error'}
@@ -529,20 +523,20 @@ const ApiSecurityDeepDive: React.FC = () => {
               {deepDiveResult.deepDive?.analysis?.inputValidation && (
                 <Box>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                    <Chip 
-                      label={`SQL Injection: ${deepDiveResult.deepDive.analysis.inputValidation.sqlInjection?.length || 0}`} 
+                    <Chip
+                      label={`SQL Injection: ${deepDiveResult.deepDive.analysis.inputValidation.sqlInjection?.length || 0}`}
                       color={deepDiveResult.deepDive.analysis.inputValidation.sqlInjection?.length > 0 ? 'error' : 'success'}
                     />
-                    <Chip 
-                      label={`XSS: ${deepDiveResult.deepDive.analysis.inputValidation.xssVulnerabilities?.length || 0}`} 
+                    <Chip
+                      label={`XSS: ${deepDiveResult.deepDive.analysis.inputValidation.xssVulnerabilities?.length || 0}`}
                       color={deepDiveResult.deepDive.analysis.inputValidation.xssVulnerabilities?.length > 0 ? 'error' : 'success'}
                     />
-                    <Chip 
-                      label={`XXE: ${deepDiveResult.deepDive.analysis.inputValidation.xxeVulnerabilities?.length || 0}`} 
+                    <Chip
+                      label={`XXE: ${deepDiveResult.deepDive.analysis.inputValidation.xxeVulnerabilities?.length || 0}`}
                       color={deepDiveResult.deepDive.analysis.inputValidation.xxeVulnerabilities?.length > 0 ? 'error' : 'success'}
                     />
-                    <Chip 
-                      label={`Command Injection: ${deepDiveResult.deepDive.analysis.inputValidation.commandInjection?.length || 0}`} 
+                    <Chip
+                      label={`Command Injection: ${deepDiveResult.deepDive.analysis.inputValidation.commandInjection?.length || 0}`}
                       color={deepDiveResult.deepDive.analysis.inputValidation.commandInjection?.length > 0 ? 'error' : 'success'}
                     />
                   </Box>
@@ -550,10 +544,10 @@ const ApiSecurityDeepDive: React.FC = () => {
                   {/* Vulnerability Details */}
                   {(deepDiveResult.deepDive.analysis.inputValidation.sqlInjection?.length > 0 ||
                     deepDiveResult.deepDive.analysis.inputValidation.xssVulnerabilities?.length > 0) && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      Critical input validation vulnerabilities detected! Immediate action required.
-                    </Alert>
-                  )}
+                      <Alert severity="error" sx={{ mt: 2 }}>
+                        Critical input validation vulnerabilities detected! Immediate action required.
+                      </Alert>
+                    )}
                 </Box>
               )}
             </AccordionDetails>
@@ -573,12 +567,12 @@ const ApiSecurityDeepDive: React.FC = () => {
               {deepDiveResult.deepDive?.analysis?.corsAnalysis && (
                 <Box>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                    <Chip 
-                      label={`CORS Headers: ${deepDiveResult.deepDive.analysis.corsAnalysis.corsHeaders?.length || 0}`} 
+                    <Chip
+                      label={`CORS Headers: ${deepDiveResult.deepDive.analysis.corsAnalysis.corsHeaders?.length || 0}`}
                       color="info"
                     />
-                    <Chip 
-                      label={`Misconfigurations: ${deepDiveResult.deepDive.analysis.corsAnalysis.misconfiguredCors?.length || 0}`} 
+                    <Chip
+                      label={`Misconfigurations: ${deepDiveResult.deepDive.analysis.corsAnalysis.misconfiguredCors?.length || 0}`}
                       color={deepDiveResult.deepDive.analysis.corsAnalysis.misconfiguredCors?.length > 0 ? 'error' : 'success'}
                     />
                   </Box>
@@ -607,12 +601,12 @@ const ApiSecurityDeepDive: React.FC = () => {
               {deepDiveResult.deepDive?.analysis?.graphqlSecurity && (
                 <Box>
                   <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-                    <Chip 
-                      label={`Introspection: ${deepDiveResult.deepDive.analysis.graphqlSecurity.introspectionEnabled ? 'Enabled' : 'Disabled'}`} 
+                    <Chip
+                      label={`Introspection: ${deepDiveResult.deepDive.analysis.graphqlSecurity.introspectionEnabled ? 'Enabled' : 'Disabled'}`}
                       color={deepDiveResult.deepDive.analysis.graphqlSecurity.introspectionEnabled ? 'error' : 'success'}
                     />
-                    <Chip 
-                      label={`Vulnerabilities: ${deepDiveResult.deepDive.analysis.graphqlSecurity.vulnerabilities?.length || 0}`} 
+                    <Chip
+                      label={`Vulnerabilities: ${deepDiveResult.deepDive.analysis.graphqlSecurity.vulnerabilities?.length || 0}`}
                       color={deepDiveResult.deepDive.analysis.graphqlSecurity.vulnerabilities?.length > 0 ? 'error' : 'success'}
                     />
                   </Box>
@@ -640,8 +634,8 @@ const ApiSecurityDeepDive: React.FC = () => {
             <AccordionDetails>
               {deepDiveResult.deepDive?.analysis?.rateLimiting && (
                 <Box>
-                  <Chip 
-                    label={`Rate Limit Headers: ${deepDiveResult.deepDive.analysis.rateLimiting.rateLimitHeaders?.length || 0}`} 
+                  <Chip
+                    label={`Rate Limit Headers: ${deepDiveResult.deepDive.analysis.rateLimiting.rateLimitHeaders?.length || 0}`}
                     color={deepDiveResult.deepDive.analysis.rateLimiting.rateLimitHeaders?.length > 0 ? 'success' : 'warning'}
                   />
 
@@ -664,9 +658,9 @@ const ApiSecurityDeepDive: React.FC = () => {
                   🧹 False Positive Filtering Results
                 </Typography>
                 {deepDiveResult.deepDive?.analysis?.falsePositiveFiltering && (
-                  <Chip 
+                  <Chip
                     label={`${deepDiveResult.deepDive.analysis.falsePositiveFiltering.falsePositivesRemoved} removed`}
-                    color="success" 
+                    color="success"
                     size="small"
                   />
                 )}
@@ -687,7 +681,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                       </CardContent>
                     </Card>
-                    
+
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" color="warning.main">
@@ -698,7 +692,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                       </CardContent>
                     </Card>
-                    
+
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" color="success.main">
@@ -709,7 +703,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                       </CardContent>
                     </Card>
-                    
+
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" color="primary">
@@ -730,22 +724,22 @@ const ApiSecurityDeepDive: React.FC = () => {
                         <Typography variant="h6">
                           Result Quality Score
                         </Typography>
-                        <Chip 
+                        <Chip
                           label={`${deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore}/100`}
                           color={
                             deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore >= 80 ? 'success' :
-                            deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore >= 60 ? 'warning' : 'error'
+                              deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore >= 60 ? 'warning' : 'error'
                           }
                           size="medium"
                         />
                       </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore} 
+                      <LinearProgress
+                        variant="determinate"
+                        value={deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore}
                         sx={{ height: 10, borderRadius: 5 }}
                         color={
                           deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore >= 80 ? 'success' :
-                          deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore >= 60 ? 'warning' : 'error'
+                            deepDiveResult.deepDive.analysis.falsePositiveFiltering.qualityScore >= 60 ? 'warning' : 'error'
                         }
                       />
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -758,7 +752,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                   <Typography variant="h6" gutterBottom sx={{ mt: 3, mb: 2 }}>
                     📊 Category-wise Filtering Results
                   </Typography>
-                  
+
                   <TableContainer component={Paper}>
                     <Table size="small">
                       <TableHead>
@@ -809,28 +803,28 @@ const ApiSecurityDeepDive: React.FC = () => {
                       </Box>
                       <List dense>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Improved Accuracy"
                             secondary={`Removed ${deepDiveResult.deepDive.analysis.falsePositiveFiltering.falsePositivesRemoved} false positive findings`}
                           />
                           <CheckCircleIcon color="success" />
                         </ListItem>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Reduced Noise"
                             secondary="Filtered out common false positives and irrelevant findings"
                           />
                           <CheckCircleIcon color="success" />
                         </ListItem>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Enhanced Reliability"
                             secondary="Higher confidence in remaining security findings"
                           />
                           <CheckCircleIcon color="success" />
                         </ListItem>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Time Savings"
                             secondary="Security teams can focus on genuine vulnerabilities"
                           />
@@ -871,9 +865,9 @@ const ApiSecurityDeepDive: React.FC = () => {
                   🎯 Smart Vulnerability Prioritization
                 </Typography>
                 {deepDiveResult.deepDive?.analysis?.vulnerabilityPrioritization && (
-                  <Chip 
+                  <Chip
                     label={`${deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.totalVulnerabilities || 0} vulnerabilities`}
-                    color="warning" 
+                    color="warning"
                     size="small"
                   />
                 )}
@@ -897,7 +891,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                       </CardContent>
                     </Card>
-                    
+
                     <Card variant="outlined" sx={{ border: '2px solid', borderColor: 'warning.main' }}>
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h3" color="warning.main">
@@ -911,7 +905,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                       </CardContent>
                     </Card>
-                    
+
                     <Card variant="outlined" sx={{ border: '2px solid', borderColor: 'info.main' }}>
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h3" color="info.main">
@@ -925,7 +919,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                       </CardContent>
                     </Card>
-                    
+
                     <Card variant="outlined" sx={{ border: '2px solid', borderColor: 'success.main' }}>
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Typography variant="h3" color="success.main">
@@ -949,24 +943,24 @@ const ApiSecurityDeepDive: React.FC = () => {
                         <Typography variant="h6">
                           Overall Priority Score
                         </Typography>
-                        <Chip 
+                        <Chip
                           label={`${deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0}/10`}
                           color={
                             (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 8.5 ? 'error' :
-                            (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 7.0 ? 'warning' : 
-                            (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 5.0 ? 'info' : 'success'
+                              (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 7.0 ? 'warning' :
+                                (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 5.0 ? 'info' : 'success'
                           }
                           size="medium"
                         />
                       </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={(deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) * 10} 
+                      <LinearProgress
+                        variant="determinate"
+                        value={(deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) * 10}
                         sx={{ height: 10, borderRadius: 5 }}
                         color={
                           (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 8.5 ? 'error' :
-                          (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 7.0 ? 'warning' : 
-                          (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 5.0 ? 'info' : 'success'
+                            (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 7.0 ? 'warning' :
+                              (deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats?.averagePriorityScore || 0) >= 5.0 ? 'info' : 'success'
                         }
                       />
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -1011,23 +1005,23 @@ const ApiSecurityDeepDive: React.FC = () => {
                                     </Box>
                                   </TableCell>
                                   <TableCell align="center">
-                                    <Chip 
+                                    <Chip
                                       label={vuln.priorityScore}
-                                      color="error" 
+                                      color="error"
                                       size="small"
                                     />
                                   </TableCell>
                                   <TableCell align="center">
-                                    <Chip 
+                                    <Chip
                                       label={vuln.priorityLevel}
-                                      color="error" 
+                                      color="error"
                                       size="small"
                                     />
                                   </TableCell>
                                   <TableCell align="center">
-                                    <Chip 
+                                    <Chip
                                       label={vuln.urgency}
-                                      color={vuln.urgency === 'Immediate' ? 'error' : 'warning'} 
+                                      color={vuln.urgency === 'Immediate' ? 'error' : 'warning'}
                                       size="small"
                                     />
                                   </TableCell>
@@ -1080,9 +1074,9 @@ const ApiSecurityDeepDive: React.FC = () => {
                                     </Box>
                                   </TableCell>
                                   <TableCell align="center">
-                                    <Chip 
+                                    <Chip
                                       label={vuln.priorityScore}
-                                      color="warning" 
+                                      color="warning"
                                       size="small"
                                     />
                                   </TableCell>
@@ -1097,11 +1091,11 @@ const ApiSecurityDeepDive: React.FC = () => {
                                     </Typography>
                                   </TableCell>
                                   <TableCell align="center">
-                                    <Chip 
+                                    <Chip
                                       label={vuln.detailedAnalysis?.remediationComplexity?.complexityLevel || 'Medium'}
                                       color={
                                         vuln.detailedAnalysis?.remediationComplexity?.complexityLevel === 'High' ? 'error' :
-                                        vuln.detailedAnalysis?.remediationComplexity?.complexityLevel === 'Low' ? 'success' : 'warning'
+                                          vuln.detailedAnalysis?.remediationComplexity?.complexityLevel === 'Low' ? 'success' : 'warning'
                                       }
                                       size="small"
                                     />
@@ -1136,7 +1130,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <WarningIcon color="warning" sx={{ fontSize: 40, mb: 1 }} />
@@ -1148,7 +1142,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <InfoIcon color="info" sx={{ fontSize: 40, mb: 1 }} />
@@ -1160,7 +1154,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <CheckCircleIcon color="success" sx={{ fontSize: 40, mb: 1 }} />
@@ -1185,10 +1179,10 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                           {Object.entries(deepDiveResult.deepDive.analysis.vulnerabilityPrioritization.prioritizationStats.categoryDistribution).map(([category, count]: [string, any]) => (
-                            <Chip 
+                            <Chip
                               key={category}
                               label={`${category}: ${count}`}
-                              color="primary" 
+                              color="primary"
                               size="small"
                             />
                           ))}
@@ -1208,28 +1202,28 @@ const ApiSecurityDeepDive: React.FC = () => {
                       </Box>
                       <List dense>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Risk-Based Prioritization"
                             secondary="Vulnerabilities prioritized by actual risk impact and exploitability"
                           />
                           <CheckCircleIcon color="success" />
                         </ListItem>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Resource Optimization"
                             secondary="Focus security efforts on highest priority vulnerabilities first"
                           />
                           <CheckCircleIcon color="success" />
                         </ListItem>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Business Impact Assessment"
                             secondary="Considers compliance, reputation, and operational impact"
                           />
                           <CheckCircleIcon color="success" />
                         </ListItem>
                         <ListItem>
-                          <ListItemText 
+                          <ListItemText
                             primary="Remediation Planning"
                             secondary="Clear timeframes and complexity assessments for fixes"
                           />
@@ -1294,7 +1288,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                           </Typography>
                         </Box>
                       </Box>
-                      
+
                       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 3 }}>
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
@@ -1306,7 +1300,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" color="error.main" sx={{ fontWeight: 'bold' }}>
@@ -1317,7 +1311,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
@@ -1328,7 +1322,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
@@ -1513,7 +1507,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         </Typography>
                         <Alert severity="warning" sx={{ mb: 2 }}>
                           <AlertTitle>Anomalous Security Findings Detected</AlertTitle>
-                          {deepDiveResult.deepDive.analysis.patternRecognition.anomalyDetection.anomalies.length} security findings 
+                          {deepDiveResult.deepDive.analysis.patternRecognition.anomalyDetection.anomalies.length} security findings
                           appear to be statistical outliers and may indicate advanced attack patterns or unique vulnerabilities.
                         </Alert>
                       </CardContent>
@@ -1542,7 +1536,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         <List>
                           {deepDiveResult.deepDive.analysis.patternRecognition.patternStatistics.insights.map((insight: string, index: number) => (
                             <ListItem key={index}>
-                              <ListItemText 
+                              <ListItemText
                                 primary={insight}
                                 sx={{ color: 'success.main' }}
                               />
@@ -1609,7 +1603,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                           </Typography>
                         </Box>
                       </Box>
-                      
+
                       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 3 }}>
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
@@ -1621,7 +1615,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h5" color="warning.main" sx={{ fontWeight: 'bold' }}>
@@ -1632,7 +1626,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h5" color="info.main" sx={{ fontWeight: 'bold' }}>
@@ -1643,7 +1637,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                           </CardContent>
                         </Card>
-                        
+
                         <Card variant="outlined">
                           <CardContent sx={{ textAlign: 'center' }}>
                             <Typography variant="h5" color="secondary.main" sx={{ fontWeight: 'bold' }}>
@@ -1710,7 +1704,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         <Typography variant="h6" gutterBottom>
                           📊 Business Impact Analysis
                         </Typography>
-                        
+
                         {/* Criticality Assessment */}
                         {deepDiveResult.deepDive.analysis.businessLogicContext.businessImpactAnalysis.criticalityAssessment && (
                           <Card variant="outlined" sx={{ mb: 2 }}>
@@ -1775,7 +1769,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         <Typography variant="h6" gutterBottom>
                           🔄 Workflow Security Analysis
                         </Typography>
-                        
+
                         {/* Critical Workflows */}
                         {deepDiveResult.deepDive.analysis.businessLogicContext.workflowAnalysis.criticalWorkflows?.length > 0 && (
                           <Box sx={{ mb: 3 }}>
@@ -1789,10 +1783,10 @@ const ApiSecurityDeepDive: React.FC = () => {
                                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                                       {workflow.name}
                                     </Typography>
-                                    <Chip 
-                                      label={workflow.criticality} 
-                                      color={workflow.criticality === 'High' ? 'error' : 'warning'} 
-                                      size="small" 
+                                    <Chip
+                                      label={workflow.criticality}
+                                      color={workflow.criticality === 'High' ? 'error' : 'warning'}
+                                      size="small"
                                     />
                                   </Box>
                                   <Typography variant="body2" color="text.secondary">
@@ -1812,7 +1806,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                             </Typography>
                             <Alert severity="warning" sx={{ mb: 2 }}>
                               <AlertTitle>Workflow Security Issues Detected</AlertTitle>
-                              {deepDiveResult.deepDive.analysis.businessLogicContext.workflowAnalysis.workflowVulnerabilities.length} workflow-related 
+                              {deepDiveResult.deepDive.analysis.businessLogicContext.workflowAnalysis.workflowVulnerabilities.length} workflow-related
                               security vulnerabilities found that could impact business processes.
                             </Alert>
                           </Box>
@@ -1903,7 +1897,7 @@ const ApiSecurityDeepDive: React.FC = () => {
                         <List>
                           {deepDiveResult.deepDive.analysis.businessLogicContext.contextualRecommendations.map((recommendation: string, index: number) => (
                             <ListItem key={index}>
-                              <ListItemText 
+                              <ListItemText
                                 primary={recommendation}
                                 sx={{ color: 'success.main' }}
                               />

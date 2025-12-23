@@ -14,7 +14,7 @@ import {
 import { Email as EmailIcon, Save as SaveIcon } from '@mui/icons-material';
 import api from '../../services/api';
 
-interface EmailPreferences {
+interface IEmailPreferences {
   emailEnabled: boolean;
   scanStarted: boolean;
   scanCompleted: boolean;
@@ -29,10 +29,21 @@ interface EmailPreferences {
   weeklyReport: boolean;
   monthlyReport: boolean;
   dailyDigest: boolean;
+  // Trivy Scanner
+  trivyEnabled: boolean;
+  trivyScanCompleted: boolean;
+  trivyScanFailed: boolean;
+  trivyVulnCritical: boolean;
+  trivyVulnHigh: boolean;
+  // Lighthouse Scanner
+  lighthouseEnabled: boolean;
+  lighthouseScanCompleted: boolean;
+  lighthouseScanFailed: boolean;
+  lighthouseLowScore: boolean;
 }
 
 const EmailPreferences: React.FC = () => {
-  const [preferences, setPreferences] = useState<EmailPreferences>({
+  const [preferences, setPreferences] = useState<IEmailPreferences>({
     emailEnabled: true,
     scanStarted: false,
     scanCompleted: true,
@@ -46,7 +57,18 @@ const EmailPreferences: React.FC = () => {
     systemAlerts: true,
     weeklyReport: true,
     monthlyReport: false,
-    dailyDigest: false
+    dailyDigest: false,
+    // Trivy
+    trivyEnabled: true,
+    trivyScanCompleted: true,
+    trivyScanFailed: true,
+    trivyVulnCritical: true,
+    trivyVulnHigh: true,
+    // Lighthouse
+    lighthouseEnabled: true,
+    lighthouseScanCompleted: true,
+    lighthouseScanFailed: true,
+    lighthouseLowScore: true
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -77,7 +99,18 @@ const EmailPreferences: React.FC = () => {
           systemAlerts: response.systemAlerts ?? true,
           weeklyReport: response.weeklyReport ?? true,
           monthlyReport: response.monthlyReport ?? false,
-          dailyDigest: response.dailyDigest ?? false
+          dailyDigest: response.dailyDigest ?? false,
+          // Trivy
+          trivyEnabled: response.trivyEnabled ?? true,
+          trivyScanCompleted: response.trivyScanCompleted ?? true,
+          trivyScanFailed: response.trivyScanFailed ?? true,
+          trivyVulnCritical: response.trivyVulnCritical ?? true,
+          trivyVulnHigh: response.trivyVulnHigh ?? true,
+          // Lighthouse
+          lighthouseEnabled: response.lighthouseEnabled ?? true,
+          lighthouseScanCompleted: response.lighthouseScanCompleted ?? true,
+          lighthouseScanFailed: response.lighthouseScanFailed ?? true,
+          lighthouseLowScore: response.lighthouseLowScore ?? true
         });
       }
     } catch (err) {
@@ -88,7 +121,7 @@ const EmailPreferences: React.FC = () => {
     }
   };
 
-  const handleChange = (field: keyof EmailPreferences) => (
+  const handleChange = (field: keyof IEmailPreferences) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setPreferences(prev => ({
@@ -330,6 +363,129 @@ const EmailPreferences: React.FC = () => {
                   />
                 }
                 label="Sistem uyarıları"
+              />
+            </FormGroup>
+          </Paper>
+        </Box>
+
+        {/* Trivy Scanner Bildirimleri */}
+        <Box flex="1 1 45%" minWidth="300px">
+          <Paper sx={{ p: 3, height: '100%', background: 'linear-gradient(135deg, rgba(0, 150, 136, 0.1) 0%, rgba(0, 96, 100, 0.05) 100%)' }}>
+            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              🐳 Trivy Tarayıcı Bildirimleri
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.trivyEnabled}
+                    onChange={handleChange('trivyEnabled')}
+                    disabled={!preferences.emailEnabled}
+                    color="primary"
+                  />
+                }
+                label="Trivy bildirimlerini etkinleştir"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.trivyScanCompleted}
+                    onChange={handleChange('trivyScanCompleted')}
+                    disabled={!preferences.emailEnabled || !preferences.trivyEnabled}
+                    color="success"
+                  />
+                }
+                label="✅ Trivy tarama tamamlandığında"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.trivyScanFailed}
+                    onChange={handleChange('trivyScanFailed')}
+                    disabled={!preferences.emailEnabled || !preferences.trivyEnabled}
+                    color="error"
+                  />
+                }
+                label="❌ Trivy tarama başarısız olduğunda"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.trivyVulnCritical}
+                    onChange={handleChange('trivyVulnCritical')}
+                    disabled={!preferences.emailEnabled || !preferences.trivyEnabled}
+                    color="error"
+                  />
+                }
+                label="🔴 Kritik container zafiyeti bulunduğunda"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.trivyVulnHigh}
+                    onChange={handleChange('trivyVulnHigh')}
+                    disabled={!preferences.emailEnabled || !preferences.trivyEnabled}
+                    color="warning"
+                  />
+                }
+                label="🟠 Yüksek container zafiyeti bulunduğunda"
+              />
+            </FormGroup>
+          </Paper>
+        </Box>
+
+        {/* Lighthouse Scanner Bildirimleri */}
+        <Box flex="1 1 45%" minWidth="300px">
+          <Paper sx={{ p: 3, height: '100%', background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(230, 81, 0, 0.05) 100%)' }}>
+            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              🔦 Lighthouse Tarayıcı Bildirimleri
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.lighthouseEnabled}
+                    onChange={handleChange('lighthouseEnabled')}
+                    disabled={!preferences.emailEnabled}
+                    color="primary"
+                  />
+                }
+                label="Lighthouse bildirimlerini etkinleştir"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.lighthouseScanCompleted}
+                    onChange={handleChange('lighthouseScanCompleted')}
+                    disabled={!preferences.emailEnabled || !preferences.lighthouseEnabled}
+                    color="success"
+                  />
+                }
+                label="✅ Lighthouse analizi tamamlandığında"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.lighthouseScanFailed}
+                    onChange={handleChange('lighthouseScanFailed')}
+                    disabled={!preferences.emailEnabled || !preferences.lighthouseEnabled}
+                    color="error"
+                  />
+                }
+                label="❌ Lighthouse analizi başarısız olduğunda"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={preferences.lighthouseLowScore}
+                    onChange={handleChange('lighthouseLowScore')}
+                    disabled={!preferences.emailEnabled || !preferences.lighthouseEnabled}
+                    color="warning"
+                  />
+                }
+                label="⚠️ Düşük performans skoru (\u003c50) tespit edildiğinde"
               />
             </FormGroup>
           </Paper>

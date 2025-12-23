@@ -41,6 +41,7 @@
     "puppeteer": "^24.33.0",
     "socket.io": "^4.8.1",
     "uuid": "^9.0.1",
+    "wapalyzer-core": "^6.11.0",
     "wappalyzer": "^7.0.3"
   },
   "devDependencies": {

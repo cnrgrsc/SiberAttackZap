@@ -3,14 +3,12 @@ import {
   IconButton,
   Badge,
   Menu,
-  MenuItem,
   Typography,
   Box,
   Divider,
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
   Button,
   Chip,
   CircularProgress
@@ -71,7 +69,7 @@ export const NotificationBell: React.FC = () => {
     if (!notification.isRead) {
       await notificationService.markAsRead(notification.id);
       setUnreadCount(prev => Math.max(0, prev - 1));
-      setNotifications(prev => 
+      setNotifications(prev =>
         prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
       );
     }
@@ -81,7 +79,7 @@ export const NotificationBell: React.FC = () => {
     } else if (notification.scanId) {
       navigate(`/scan-history?scanId=${notification.scanId}`);
     }
-    
+
     handleClose();
   };
 
@@ -195,42 +193,42 @@ export const NotificationBell: React.FC = () => {
                       }
                     }}
                   >
-                  <Box sx={{ width: '100%' }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.5}>
-                      <Box display="flex" alignItems="center" gap={1} flex={1}>
-                        {!notification.isRead && (
-                          <CircleIcon sx={{ fontSize: 8, color: 'primary.main' }} />
-                        )}
-                        <Typography variant="subtitle2" sx={{ fontWeight: notification.isRead ? 400 : 600 }}>
-                          {notification.title}
-                        </Typography>
+                    <Box sx={{ width: '100%' }}>
+                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={0.5}>
+                        <Box display="flex" alignItems="center" gap={1} flex={1}>
+                          {!notification.isRead && (
+                            <CircleIcon sx={{ fontSize: 8, color: 'primary.main' }} />
+                          )}
+                          <Typography variant="subtitle2" sx={{ fontWeight: notification.isRead ? 400 : 600 }}>
+                            {notification.title}
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleDelete(notification.id, e)}
+                          sx={{ ml: 1 }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
                       </Box>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleDelete(notification.id, e)}
-                        sx={{ ml: 1 }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
+
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                        {notification.message}
+                      </Typography>
+
+                      {notification.scan && (
+                        <Chip
+                          label={notification.scan.name}
+                          size="small"
+                          color={getNotificationColor(notification.type) as any}
+                          sx={{ mr: 1, mb: 0.5 }}
+                        />
+                      )}
+
+                      <Typography variant="caption" color="text.disabled">
+                        {formatTimeAgo(notification.createdAt || '')}
+                      </Typography>
                     </Box>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      {notification.message}
-                    </Typography>
-
-                    {notification.scan && (
-                      <Chip
-                        label={notification.scan.name}
-                        size="small"
-                        color={getNotificationColor(notification.type) as any}
-                        sx={{ mr: 1, mb: 0.5 }}
-                      />
-                    )}
-
-                    <Typography variant="caption" color="text.disabled">
-                      {formatTimeAgo(notification.createdAt || '')}
-                    </Typography>
-                  </Box>
                   </ListItemButton>
                 </ListItem>
                 <Divider component="li" />

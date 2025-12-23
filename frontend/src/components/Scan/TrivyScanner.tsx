@@ -25,10 +25,7 @@ import {
     Accordion,
     AccordionSummary,
     AccordionDetails,
-    IconButton,
     Tooltip,
-    FormControlLabel,
-    Switch,
 } from '@mui/material';
 import {
     Security as SecurityIcon,
@@ -44,10 +41,7 @@ import {
     Storage as StorageIcon,
     Code as CodeIcon,
     VpnKey as SecretIcon,
-    Gavel as LicenseIcon,
     List as SbomIcon,
-    Visibility as VisibilityIcon,
-    VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { zapService } from '../../services/zapService';
 import SavedRepositories from './SavedRepositories';
@@ -129,7 +123,6 @@ const TrivyScanner: React.FC = () => {
     const [result, setResult] = useState<TrivyScanResponse | null>(null);
     const [sbomData, setSbomData] = useState<any | null>(null);
     const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
-    const [activeResultTab, setActiveResultTab] = useState(0);
     const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
         open: false,
         message: '',

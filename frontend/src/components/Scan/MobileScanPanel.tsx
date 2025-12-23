@@ -27,7 +27,6 @@ import {
   TableRow,
   Paper,
   Tooltip,
-  Fab,
   Snackbar,
 } from '@mui/material';
 import {
@@ -38,14 +37,11 @@ import {
   GetApp as DownloadIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
-  Add as AddIcon,
   Visibility as ViewIcon,
-  PlayArrow as PlayIcon,
-  Stop as StopIcon,
 } from '@mui/icons-material';
 import { mobsfService, MobileScanResult, MobileScanStatistics } from '../../services/mobsfService';
 
-interface MobileScanPanelProps {}
+interface MobileScanPanelProps { }
 
 const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
   const [loading, setLoading] = useState(false);
@@ -63,6 +59,7 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, statusFilter, platformFilter]);
 
   const loadData = async () => {
@@ -99,7 +96,7 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
     if (file) {
       const allowedTypes = ['.apk', '.aab', '.ipa', '.zip'];
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
-      
+
       if (allowedTypes.includes(fileExtension)) {
         setSelectedFile(file);
         setScanName(`Mobile Scan - ${file.name}`);
@@ -121,12 +118,12 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
 
       const result = await mobsfService.uploadAndScan(selectedFile, scanName);
       setSuccess(`Upload successful! Scan started: ${result.fileName}`);
-      
+
       // Reset form
       setSelectedFile(null);
       setScanName('');
       setUploadDialogOpen(false);
-      
+
       // Reload data
       loadData();
     } catch (err: any) {
@@ -374,8 +371,8 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
                       <Chip
                         label={scan.vulnerabilityCounts.critical}
                         size="small"
-                        sx={{ 
-                          backgroundColor: getSeverityColor('critical'), 
+                        sx={{
+                          backgroundColor: getSeverityColor('critical'),
                           color: 'white',
                           fontSize: '0.7rem',
                           height: 20,
@@ -386,8 +383,8 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
                       <Chip
                         label={scan.vulnerabilityCounts.high}
                         size="small"
-                        sx={{ 
-                          backgroundColor: getSeverityColor('high'), 
+                        sx={{
+                          backgroundColor: getSeverityColor('high'),
                           color: 'white',
                           fontSize: '0.7rem',
                           height: 20,
@@ -398,8 +395,8 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
                       <Chip
                         label={scan.vulnerabilityCounts.medium}
                         size="small"
-                        sx={{ 
-                          backgroundColor: getSeverityColor('medium'), 
+                        sx={{
+                          backgroundColor: getSeverityColor('medium'),
                           color: 'black',
                           fontSize: '0.7rem',
                           height: 20,
@@ -422,7 +419,7 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
                     </Tooltip>
                     {scan.status === 'COMPLETED' && (
                       <Tooltip title="Download Report">
-                        <IconButton 
+                        <IconButton
                           size="small"
                           onClick={() => handleDownloadReport(scan.id)}
                         >
@@ -431,7 +428,7 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
                       </Tooltip>
                     )}
                     <Tooltip title="Delete">
-                      <IconButton 
+                      <IconButton
                         size="small"
                         onClick={() => handleDeleteScan(scan.id)}
                       >
@@ -477,7 +474,7 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
               fullWidth
               sx={{ mb: 3 }}
             />
-            
+
             <input
               type="file"
               accept=".apk,.aab,.ipa,.zip"
@@ -496,18 +493,18 @@ const MobileScanPanel: React.FC<MobileScanPanelProps> = () => {
                 Select File (APK, AAB, IPA, ZIP)
               </Button>
             </label>
-            
+
             {selectedFile && (
               <Alert severity="info" sx={{ mb: 2 }}>
                 Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
               </Alert>
             )}
-            
+
             <Alert severity="info">
               <Typography variant="body2">
                 Supported formats:
                 <br />• APK - Android Application Package
-                <br />• AAB - Android App Bundle  
+                <br />• AAB - Android App Bundle
                 <br />• IPA - iOS App Store Package
                 <br />• ZIP - Compressed source code
               </Typography>

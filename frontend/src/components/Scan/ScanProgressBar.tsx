@@ -57,21 +57,19 @@ const ScanProgressBar: React.FC<ScanProgressProps> = ({
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // WebSocket real-time updates
   useEffect(() => {
     if (realTimeUpdates && scanId) {
       // Join scan room for real-time updates
       socketService.joinScanRoom(scanId);
-      
+
       // Listen for progress updates
       socketService.onScanProgress((data) => {
         setProgressData(prev => ({
           ...prev,
           ...data,
         }));
-        setLastUpdate(new Date());
         setIsLoading(false);
       });
 
@@ -94,7 +92,8 @@ const ScanProgressBar: React.FC<ScanProgressProps> = ({
       } else if ((data as any).error) {
         setError((data as any).error);
         onError?.((data as any).error);
-      }    } catch (err) {
+      }
+    } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch progress';
       setError(errorMessage);
       onError?.(errorMessage);
@@ -107,6 +106,7 @@ const ScanProgressBar: React.FC<ScanProgressProps> = ({
     if (!realTimeUpdates) {
       fetchProgress();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanId, refreshInterval, progressData?.isCompleted, error]);
 
   const getPhaseIcon = (phase: string) => {
@@ -216,71 +216,71 @@ const ScanProgressBar: React.FC<ScanProgressProps> = ({
           </Box>
 
           <Collapse in={Object.keys(progressData.details).length > 0}>            <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-              <Typography variant="subtitle2" gutterBottom>
-                Detailed Progress
-              </Typography>
-              <Box display="flex" flexDirection="column" gap={2}>
-                {progressData.details.spider && (
-                  <Box>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <SearchIcon fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2" fontWeight="medium">
-                        Spider Crawl
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={progressData.details.spider.progress}
-                      color="primary"
-                      sx={{ mb: 1, height: 6, borderRadius: 3 }}
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {progressData.details.spider.status} - {Math.round(progressData.details.spider.progress)}%
+            <Typography variant="subtitle2" gutterBottom>
+              Detailed Progress
+            </Typography>
+            <Box display="flex" flexDirection="column" gap={2}>
+              {progressData.details.spider && (
+                <Box>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <SearchIcon fontSize="small" sx={{ mr: 1 }} />
+                    <Typography variant="body2" fontWeight="medium">
+                      Spider Crawl
                     </Typography>
                   </Box>
-                )}
+                  <LinearProgress
+                    variant="determinate"
+                    value={progressData.details.spider.progress}
+                    color="primary"
+                    sx={{ mb: 1, height: 6, borderRadius: 3 }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {progressData.details.spider.status} - {Math.round(progressData.details.spider.progress)}%
+                  </Typography>
+                </Box>
+              )}
 
-                {progressData.details.ajaxSpider && (
-                  <Box>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <SearchIcon fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2" fontWeight="medium">
-                        AJAX Spider
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={progressData.details.ajaxSpider.progress}
-                      color="secondary"
-                      sx={{ mb: 1, height: 6, borderRadius: 3 }}
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {progressData.details.ajaxSpider.status} - {Math.round(progressData.details.ajaxSpider.progress)}%
+              {progressData.details.ajaxSpider && (
+                <Box>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <SearchIcon fontSize="small" sx={{ mr: 1 }} />
+                    <Typography variant="body2" fontWeight="medium">
+                      AJAX Spider
                     </Typography>
                   </Box>
-                )}
+                  <LinearProgress
+                    variant="determinate"
+                    value={progressData.details.ajaxSpider.progress}
+                    color="secondary"
+                    sx={{ mb: 1, height: 6, borderRadius: 3 }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {progressData.details.ajaxSpider.status} - {Math.round(progressData.details.ajaxSpider.progress)}%
+                  </Typography>
+                </Box>
+              )}
 
-                {progressData.details.activeScan && (
-                  <Box>
-                    <Box display="flex" alignItems="center" mb={1}>
-                      <SecurityIcon fontSize="small" sx={{ mr: 1 }} />
-                      <Typography variant="body2" fontWeight="medium">
-                        Active Scan
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={progressData.details.activeScan.progress}
-                      color="warning"
-                      sx={{ mb: 1, height: 6, borderRadius: 3 }}
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {progressData.details.activeScan.status} - {Math.round(progressData.details.activeScan.progress)}%
+              {progressData.details.activeScan && (
+                <Box>
+                  <Box display="flex" alignItems="center" mb={1}>
+                    <SecurityIcon fontSize="small" sx={{ mr: 1 }} />
+                    <Typography variant="body2" fontWeight="medium">
+                      Active Scan
                     </Typography>
                   </Box>
-                )}
-              </Box>
-            </Paper>
+                  <LinearProgress
+                    variant="determinate"
+                    value={progressData.details.activeScan.progress}
+                    color="warning"
+                    sx={{ mb: 1, height: 6, borderRadius: 3 }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {progressData.details.activeScan.status} - {Math.round(progressData.details.activeScan.progress)}%
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Paper>
           </Collapse>
 
           {progressData.isCompleted && (

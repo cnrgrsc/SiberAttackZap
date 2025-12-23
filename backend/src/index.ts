@@ -34,6 +34,7 @@ import notificationRoutes from './routes/notifications.routes';
 import technologyRoutes from './routes/technology.routes';
 import lighthouseRoutes from './routes/lighthouse.routes';
 import trivyRoutes from './routes/trivy.routes';
+import kaliRoutes from './routes/kali.routes';
 import { settingsService } from './services/settingsService';
 
 // Load environment variables: prefer .env.local (ignored in repo), then fall back to .env
@@ -155,6 +156,7 @@ app.use('/api/notifications', notificationRoutes); // Bildirimler
 app.use('/api/technology', technologyRoutes); // Teknoloji tarayıcısı
 app.use('/api/lighthouse', lighthouseRoutes); // Lighthouse tarayıcısı
 app.use('/api/trivy', trivyRoutes); // Trivy güvenlik tarayıcısı
+app.use('/api/kali', kaliRoutes); // Kali Linux güvenlik araçları
 
 // Error handling middleware
 app.use(notFoundHandler);

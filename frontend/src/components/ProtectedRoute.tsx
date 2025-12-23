@@ -1,5 +1,4 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
 import { usePermissions } from '../contexts/PermissionContext';
 import { Box, CircularProgress, Typography, Paper } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
@@ -17,7 +16,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAll = false,
   fallbackPath = '/'
 }) => {
-  const { permissions, loading, hasAnyPermission, hasAllPermissions } = usePermissions();
+  const { loading, hasAnyPermission, hasAllPermissions } = usePermissions();
 
   // Yükleniyor
   if (loading) {
@@ -47,7 +46,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     if (!hasAccess) {
       console.warn('🚫 Access denied. Required permissions:', requiredPermissions);
-      
+
       // Yetkisiz erişim sayfası
       return (
         <Box

@@ -753,4 +753,5 @@ class ScanService {
   }
 }
 
-export default new ScanService();
+const scanService = new ScanService();
+export default scanService;

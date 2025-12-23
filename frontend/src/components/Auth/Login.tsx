@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
   CardContent,
   TextField,
   Button,
@@ -16,11 +15,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
 } from '@mui/material';
 import {
   Visibility,
@@ -31,8 +25,6 @@ import {
   Email as EmailIcon,
   Business as BusinessIcon,
   Description as DescriptionIcon,
-  AdminPanelSettings as AdminIcon,
-  Code as DeveloperIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService, { LoginCredentials, AccessRequestData } from '../../services/authService';
@@ -44,19 +36,19 @@ const Login = () => {
   const location = useLocation();
   const routeError = (location.state as any)?.error;
   const { refreshPermissions } = usePermissions();
-  
+
   // Login form state
   const [credentials, setCredentials] = useState<LoginCredentials>({
     username: '',
     password: ''
   });
-  
+
   // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   // Access request dialog state
   const [showAccessRequest, setShowAccessRequest] = useState(false);
   const [accessRequestData, setAccessRequestData] = useState<AccessRequestData>({
@@ -84,7 +76,7 @@ const Login = () => {
       } else {
       }
     };
-    
+
     checkInitialAuth();
   }, []); // Empty dependency - only run once on mount
 
@@ -104,7 +96,7 @@ const Login = () => {
   };
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!credentials.username.trim() || !credentials.password.trim()) {
       setError('Kullanıcı adı ve şifre gereklidir');
       return;
@@ -115,20 +107,20 @@ const Login = () => {
 
     try {
       const result = await authService.login(credentials);
-      console.log('✅ AuthService response:', result);      if (result.success && result.user) {
+      console.log('✅ AuthService response:', result); if (result.success && result.user) {
         setSuccess('Giriş başarılı! Yönlendiriliyorsunuz...');
-        
+
         // Clear any previous errors
         setError(null);
-        
+
         // ÖNEMLI: Permissions'ı refresh et ÖNCE!
         console.log('🔄 Refreshing permissions before navigation...');
         await refreshPermissions();
         console.log('✅ Permissions refreshed, now navigating...');
-        
+
         // Determine redirect path
         const redirectPath = result.user.role === 'admin' ? '/admin' : '/dashboard';
-        
+
         // Navigate after permissions are loaded
         navigate(redirectPath, { replace: true });
       } else {
@@ -143,9 +135,9 @@ const Login = () => {
   };
 
   const handleAccessRequest = async () => {
-    if (!accessRequestData.firstName.trim() || !accessRequestData.lastName.trim() || 
-        !accessRequestData.email.trim() || !accessRequestData.department.trim() || 
-        !accessRequestData.reason.trim()) {
+    if (!accessRequestData.firstName.trim() || !accessRequestData.lastName.trim() ||
+      !accessRequestData.email.trim() || !accessRequestData.department.trim() ||
+      !accessRequestData.reason.trim()) {
       setError('Tüm alanları doldurunuz');
       return;
     }
@@ -155,7 +147,7 @@ const Login = () => {
 
     try {
       const result = await authService.requestAccess(accessRequestData);
-      
+
       if (result.success) {
         setSuccess(result.message);
         // Dialog'u kapat ve formu temizle
@@ -185,7 +177,7 @@ const Login = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
-  };  return (
+  }; return (
     <Box
       sx={{
         minHeight: '100vh',
@@ -241,7 +233,7 @@ const Login = () => {
               {error}
             </Alert>
           )}
-          
+
           {success && (
             <Alert severity="success" sx={{ mb: 3 }}>
               {success}
@@ -365,7 +357,7 @@ const Login = () => {
             İBB Güvenlik Platformu Erişim Talebi
           </Box>
         </DialogTitle>
-        
+
         <DialogContent>
           <Typography variant="body2" color="text.secondary" paragraph>
             İBB Güvenlik Test Platformuna erişim için aşağıdaki bilgileri doldurunuz.
@@ -392,7 +384,7 @@ const Login = () => {
                 onChange={handleAccessRequestChange('lastName')}
               />
             </Box>
-            
+
             <TextField
               fullWidth
               label="E-posta"
@@ -407,7 +399,7 @@ const Login = () => {
                 ),
               }}
             />
-            
+
             <TextField
               fullWidth
               label="Departman"
@@ -421,14 +413,14 @@ const Login = () => {
                 ),
               }}
             />
-            
+
             <Alert severity="info" sx={{ mt: 1 }}>
               <Typography variant="body2">
-                <strong>Not:</strong> Kayıt olduğunuzda size otomatik olarak temel kullanıcı rolü atanacaktır. 
+                <strong>Not:</strong> Kayıt olduğunuzda size otomatik olarak temel kullanıcı rolü atanacaktır.
                 Admin, gerekli rolleri ve yetkileri daha sonra tanımlayacaktır.
               </Typography>
             </Alert>
-            
+
             <TextField
               fullWidth
               label="Erişim Gerekçesi"

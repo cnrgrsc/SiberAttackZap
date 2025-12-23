@@ -16,7 +16,6 @@ import {
   Divider,
   LinearProgress,
   IconButton,
-  Tooltip,
   Tabs,
   Tab,
 } from '@mui/material';
@@ -27,12 +26,10 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
-  PlayArrow as PlayArrowIcon,
   Stop as StopIcon,
   Refresh as RefreshIcon,
   Launch as LaunchIcon,
   PhoneAndroid as MobileIcon,
-  GetApp as DownloadIcon,
   Computer as ComputerIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -42,7 +39,7 @@ import MobileScanPanel from '../Scan/MobileScanPanel';
 import ZapAdvancedAnalysis from '../Scan/ZapAdvancedAnalysis';
 import ApiSecurityDeepDive from '../Scan/ApiSecurityDeepDive';
 import QueueStatusWidget from './QueueStatusWidget';
-import api, { API_BASE_URL } from '../../services/api';
+import api from '../../services/api';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();

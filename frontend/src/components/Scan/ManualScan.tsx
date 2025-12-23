@@ -36,9 +36,8 @@ import {
   AccordionDetails,
   Badge
 } from '@mui/material';
-import { 
-  PlayArrow as PlayIcon, 
-  Help as HelpIcon,
+import {
+  PlayArrow as PlayIcon,
   Info as InfoIcon,
   Security as SecurityIcon,
   BugReport as BugReportIcon,
@@ -53,7 +52,6 @@ import {
   Stop as StopIcon,
   Clear as ClearIcon,
   Refresh as RefreshIcon,
-  Settings as SettingsIcon,
   ExpandMore as ExpandMoreIcon,
   Launch as LaunchIcon,
   MonitorHeart as MonitorIcon,
@@ -156,7 +154,7 @@ const zapService = {
       };
     }
   },
-  
+
   enableHud: async (enable: boolean): Promise<void> => {
     try {
       await fetch(`${API_BASE_URL}/api/zap/hud`, {
@@ -168,7 +166,7 @@ const zapService = {
       console.error('Failed to toggle HUD:', error);
     }
   },
-  
+
   setInterceptMode: async (enable: boolean): Promise<void> => {
     try {
       await fetch(`${API_BASE_URL}/api/zap/intercept`, {
@@ -180,12 +178,12 @@ const zapService = {
       console.error('Failed to toggle intercept:', error);
     }
   },
-  
+
   getInterceptedRequests: async (): Promise<HttpRequest[]> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/zap/history`);
       const data = await response.json();
-      
+
       if (data.success) {
         return data.data.requests || [];
       } else {
@@ -197,7 +195,7 @@ const zapService = {
       return [];
     }
   },
-  
+
   openHudBrowser: async (targetUrl: string): Promise<void> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/zap/open-browser`, {
@@ -205,24 +203,24 @@ const zapService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: targetUrl })
       });
-      
+
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to open browser');
       }
-      
-      
+
+
       // Success notification
       if (result.data.warning) {
       }
-      
+
     } catch (error) {
       console.error('Failed to open HUD browser:', error);
       throw error;
     }
   },
-  
+
   spiderScan: async (url: string): Promise<AttackResult> => {
     await new Promise(resolve => setTimeout(resolve, 3000));
     return {
@@ -236,7 +234,7 @@ const zapService = {
       recommendations: ['Review discovered endpoints', 'Check for sensitive information']
     };
   },
-  
+
   activeScan: async (url: string): Promise<AttackResult> => {
     await new Promise(resolve => setTimeout(resolve, 5000));
     return {
@@ -257,14 +255,14 @@ const zapService = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
       const result = await response.json();
-      
+
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to clear session');
       }
-      
-      
+
+
     } catch (error) {
       console.error('Failed to clear ZAP session:', error);
       throw error;
@@ -274,99 +272,238 @@ const zapService = {
 
 const kaliService = {
   executeCommand: async (tool: string, target: string, options: KaliToolOptions): Promise<AttackResult> => {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const commands = {
-      nmap: `nmap ${options.nmap?.scanType || '-sS'} -p ${options.nmap?.ports || '1-1000'} ${target}`,
-      gobuster: `gobuster dir -u ${target} -w ${options.gobuster?.wordlist || '/usr/share/wordlists/dirb/common.txt'}`,
-      sqlmap: `sqlmap -u "${target}" --level=${options.sqlmap?.level || 1} --risk=${options.sqlmap?.risk || 1}`,
-      nikto: `nikto -h ${target} -Format ${options.nikto?.format || 'txt'}`,
-      hydra: `hydra -L ${options.hydra?.userlist || 'users.txt'} -P ${options.hydra?.passlist || 'pass.txt'} ${target} ${options.hydra?.protocol || 'ssh'}`
-    };
-    
-    return {
-      id: Date.now().toString(),
-      tool: `Kali ${tool.toUpperCase()}`,
-      command: commands[tool as keyof typeof commands] || `${tool} ${target}`,
-      timestamp: new Date().toISOString(),
-      duration: Math.floor(Math.random() * 5000) + 1000,
-      severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)] as any,
-      findings: [
-        `${tool} scan completed successfully`,
-        `Target: ${target}`,
-        'Ports found: 22, 80, 443',
-        'Services identified: SSH, HTTP, HTTPS'
-      ],
-      recommendations: ['Review open ports', 'Update services', 'Check configurations']
-    };
+    try {
+      // Start the scan
+      const startResponse = await fetch(`${API_BASE_URL}/api/kali/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool, target, options: options[tool as keyof KaliToolOptions] || {} })
+      });
+
+      const startData = await startResponse.json();
+
+      if (!startData.success) {
+        throw new Error(startData.error || 'Failed to start scan');
+      }
+
+      const scanId = startData.scanId;
+      let allOutput: string[] = [];
+      let lastLineCount = 0;
+      let attempts = 0;
+      const maxAttempts = 120; // 2 minutes max (1 second intervals)
+
+      // Poll for results
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const statusResponse = await fetch(`${API_BASE_URL}/api/kali/status/${scanId}?fromLine=${lastLineCount}`);
+        const statusData = await statusResponse.json();
+
+        if (!statusData.success) {
+          break;
+        }
+
+        // Collect new output
+        if (statusData.output && statusData.output.length > 0) {
+          allOutput = [...allOutput, ...statusData.output];
+          lastLineCount = statusData.totalLines;
+        }
+
+        // Check if completed
+        if (statusData.status === 'completed' || statusData.status === 'failed') {
+          return {
+            id: scanId,
+            tool: `Kali ${tool.toUpperCase()}`,
+            command: startData.command || `${tool} ${target}`,
+            timestamp: statusData.startTime,
+            duration: statusData.endTime ? new Date(statusData.endTime).getTime() - new Date(statusData.startTime).getTime() : 0,
+            severity: statusData.status === 'completed' ? 'medium' : 'high',
+            findings: allOutput.filter(line => !line.startsWith('[ERROR]')),
+            recommendations: statusData.status === 'completed'
+              ? ['Review scan output', 'Investigate vulnerabilities', 'Update configurations']
+              : ['Scan failed - check tool installation', 'Verify target accessibility']
+          };
+        }
+
+        attempts++;
+      }
+
+      // Timeout - return partial results
+      return {
+        id: scanId,
+        tool: `Kali ${tool.toUpperCase()}`,
+        command: startData.command || `${tool} ${target}`,
+        timestamp: new Date().toISOString(),
+        duration: attempts * 1000,
+        severity: 'low',
+        findings: [...allOutput, 'Scan timed out - partial results shown'],
+        recommendations: ['Scan may still be running on server', 'Check scan status later']
+      };
+
+    } catch (error: any) {
+      console.error('Kali tool execution error:', error);
+
+      // Fallback to mock data if backend is not available
+      const commands: Record<string, string> = {
+        nmap: `nmap ${options.nmap?.scanType || '-sS'} -p ${options.nmap?.ports || '1-1000'} ${target}`,
+        gobuster: `gobuster dir -u ${target} -w ${options.gobuster?.wordlist || '/usr/share/wordlists/dirb/common.txt'}`,
+        sqlmap: `sqlmap -u "${target}" --level=${options.sqlmap?.level || 1} --risk=${options.sqlmap?.risk || 1}`,
+        nikto: `nikto -h ${target} -Format ${options.nikto?.format || 'txt'}`,
+        hydra: `hydra -L ${options.hydra?.userlist || 'users.txt'} -P ${options.hydra?.passlist || 'pass.txt'} ${target} ${options.hydra?.protocol || 'ssh'}`,
+        nuclei: `nuclei -u ${target} -silent`,
+        ffuf: `ffuf -u ${target}/FUZZ -w common.txt`,
+        whatweb: `whatweb -v ${target}`,
+        wpscan: `wpscan --url ${target}`,
+        sslyze: `sslyze ${target}`,
+        dirb: `dirb ${target} common.txt`
+      };
+
+      return {
+        id: Date.now().toString(),
+        tool: `Kali ${tool.toUpperCase()}`,
+        command: commands[tool] || `${tool} ${target}`,
+        timestamp: new Date().toISOString(),
+        duration: 0,
+        severity: 'high',
+        findings: [
+          `⚠️ Backend connection failed: ${error.message}`,
+          'Tool execution could not be started',
+          'Make sure the backend server is running',
+          'Tools need to be installed on the Docker container'
+        ],
+        recommendations: [
+          'Check backend server at ' + API_BASE_URL,
+          'Verify Docker container is running',
+          'Install required tools: ' + tool
+        ]
+      };
+    }
+  },
+
+  // Get list of installed tools
+  getTools: async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/kali/tools`);
+      const data = await response.json();
+      return data.success ? data.tools : [];
+    } catch {
+      return [];
+    }
+  },
+
+  // Cancel running scan
+  cancelScan: async (scanId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/kali/scan/${scanId}`, {
+        method: 'DELETE'
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
   }
 };
 
-// Kali Linux Tools Configuration
+// Kali Linux Tools Configuration - All Open Source
 const KALI_TOOLS = {
   nmap: {
     name: 'Nmap',
-    description: 'Network discovery ve port scanning',
+    description: 'Ağ keşfi ve port tarama aracı',
     icon: <TerminalIcon />,
     category: 'Network Scanning',
-    help: 'Nmap ile ağ keşfi ve port tarama yapabilirsiniz',
-    dockerInstall: 'apt-get update && apt-get install -y nmap'
+    help: 'Nmap ile ağ keşfi, port tarama, OS tespiti ve servis versiyonu belirleme yapabilirsiniz',
+    offlinePackage: 'nmap-7.94-1.x86_64.rpm',
+    downloadUrl: 'https://nmap.org/dist/nmap-7.94-1.x86_64.rpm'
   },
   gobuster: {
     name: 'Gobuster',
-    description: 'Directory/file/DNS brute-forcer',
+    description: 'Dizin/dosya/DNS brute-force aracı',
     icon: <BugReportIcon />,
     category: 'Web Enumeration',
-    help: 'Gizli dizinleri ve dosyaları keşfetmek için kullanılır',
-    dockerInstall: 'apt-get update && apt-get install -y gobuster'
+    help: 'Gizli dizinleri, dosyaları ve alt alan adlarını keşfeder',
+    offlinePackage: 'gobuster (Go binary)',
+    downloadUrl: 'https://github.com/OJ/gobuster/releases'
   },
   sqlmap: {
     name: 'SQLMap',
-    description: 'SQL injection detection & exploitation',
+    description: 'SQL injection tespit ve exploit aracı',
     icon: <CodeIcon />,
     category: 'Database Testing',
-    help: 'SQL injection açıklarını tespit eder ve exploit eder',
-    dockerInstall: 'apt-get update && apt-get install -y sqlmap'
+    help: 'SQL injection açıklarını otomatik tespit eder ve exploit eder',
+    offlinePackage: 'sqlmap-1.8.zip',
+    downloadUrl: 'https://github.com/sqlmapproject/sqlmap/releases'
   },
   nikto: {
     name: 'Nikto',
-    description: 'Web server scanner',
+    description: 'Web sunucu güvenlik tarayıcısı',
     icon: <SecurityIcon />,
     category: 'Web Vulnerability',
-    help: 'Web sunucu güvenlik açıklarını tarar',
-    dockerInstall: 'apt-get update && apt-get install -y nikto'
+    help: 'Web sunucularda 6700+ potansiyel tehlikeli dosya/program tarar',
+    offlinePackage: 'nikto-2.5.0.tar.gz',
+    downloadUrl: 'https://github.com/sullo/nikto/releases'
   },
   hydra: {
     name: 'Hydra',
-    description: 'Network login cracker',
+    description: 'Ağ login brute-force aracı',
     icon: <TerminalIcon />,
     category: 'Password Attack',
-    help: 'Brute force saldırıları için kullanılır',
-    dockerInstall: 'apt-get update && apt-get install -y hydra'
-  },
-  metasploit: {
-    name: 'Metasploit',
-    description: 'Penetration testing framework',
-    icon: <CodeIcon />,
-    category: 'Exploitation',
-    help: 'Exploit geliştirme ve penetration testing',
-    dockerInstall: 'curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall && chmod 755 msfinstall && ./msfinstall'
-  },
-  burpsuite: {
-    name: 'Burp Suite',
-    description: 'Web application security testing',
-    icon: <SecurityIcon />,
-    category: 'Web Security',
-    help: 'Professional web application security testing',
-    dockerInstall: 'wget -O burpsuite.jar "https://portswigger.net/burp/releases/download?product=community&type=Jar"'
+    help: 'SSH, FTP, HTTP, MySQL vb. servislere brute force saldırısı yapar',
+    offlinePackage: 'hydra-9.5.tar.gz',
+    downloadUrl: 'https://github.com/vanhauser-thc/thc-hydra/releases'
   },
   wpscan: {
     name: 'WPScan',
-    description: 'WordPress security scanner',
+    description: 'WordPress güvenlik tarayıcısı',
     icon: <ScannerIcon />,
     category: 'CMS Security',
-    help: 'WordPress güvenlik açıklarını tarar',
-    dockerInstall: 'gem install wpscan'
+    help: 'WordPress sitelerinde güvenlik açıklarını, eklenti/tema zafiyetlerini tarar',
+    offlinePackage: 'wpscan (Ruby gem)',
+    downloadUrl: 'https://github.com/wpscanteam/wpscan/releases'
+  },
+  dirb: {
+    name: 'Dirb',
+    description: 'Web içerik tarayıcı',
+    icon: <SpiderIcon />,
+    category: 'Web Enumeration',
+    help: 'Wordlist tabanlı web dizin ve dosya taraması yapar',
+    offlinePackage: 'dirb-2.22.tar.gz',
+    downloadUrl: 'https://sourceforge.net/projects/dirb/files/'
+  },
+  whatweb: {
+    name: 'WhatWeb',
+    description: 'Web teknoloji tanımlayıcı',
+    icon: <InfoIcon />,
+    category: 'Reconnaissance',
+    help: 'Web sitelerinin kullandığı teknolojileri tespit eder',
+    offlinePackage: 'whatweb-0.5.5.tar.gz',
+    downloadUrl: 'https://github.com/urbanadventurer/WhatWeb/releases'
+  },
+  nuclei: {
+    name: 'Nuclei',
+    description: 'Şablon tabanlı zafiyet tarayıcı',
+    icon: <BugReportIcon />,
+    category: 'Vulnerability Scanner',
+    help: 'YAML şablonları ile hızlı zafiyet taraması yapar',
+    offlinePackage: 'nuclei (Go binary)',
+    downloadUrl: 'https://github.com/projectdiscovery/nuclei/releases'
+  },
+  sslyze: {
+    name: 'SSLyze',
+    description: 'SSL/TLS yapılandırma analizi',
+    icon: <SecurityIcon />,
+    category: 'SSL/TLS Testing',
+    help: 'SSL/TLS sertifika ve yapılandırma güvenliğini analiz eder',
+    offlinePackage: 'sslyze (Python package)',
+    downloadUrl: 'https://github.com/nabla-c0d3/sslyze/releases'
+  },
+  ffuf: {
+    name: 'Ffuf',
+    description: 'Hızlı web fuzzer',
+    icon: <TerminalIcon />,
+    category: 'Web Fuzzing',
+    help: 'Yüksek hızda dizin/parametre fuzzing yapar',
+    offlinePackage: 'ffuf (Go binary)',
+    downloadUrl: 'https://github.com/ffuf/ffuf/releases'
   }
 };
 
@@ -374,9 +511,10 @@ const ManualScan: React.FC = () => {
   // Get technology data from navigation state
   const location = useLocation();
   const locationState = location.state as { targetUrl?: string; detectedTechnologies?: any[] } | null;
-  
+
   // State Management
   const [targetUrl, setTargetUrl] = useState(locationState?.targetUrl || '');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [detectedTechnologies, setDetectedTechnologies] = useState<any[]>(locationState?.detectedTechnologies || []);
   const [zapStatus, setZapStatus] = useState<ZapStatus | null>(null);
   const [interceptedRequests, setInterceptedRequests] = useState<HttpRequest[]>([]);
@@ -392,7 +530,11 @@ const ManualScan: React.FC = () => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [editableRequest, setEditableRequest] = useState<HttpRequest | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  
+  // New state for scan result details
+  const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+  const [selectedScanResult, setSelectedScanResult] = useState<AttackResult | null>(null);
+  const [scanResultDialogOpen, setScanResultDialogOpen] = useState(false);
+
   // Refs
   const requestsEndRef = useRef<HTMLDivElement>(null);
 
@@ -441,7 +583,7 @@ const ManualScan: React.FC = () => {
   // Tool Management
   const handleToolChange = (tool: string) => {
     setSelectedTool(tool);
-    
+
     const defaultOptions: KaliToolOptions = {
       nmap: {
         ports: '1-1000',
@@ -475,7 +617,7 @@ const ManualScan: React.FC = () => {
         threads: 4
       }
     };
-    
+
     setToolOptions({ [tool]: defaultOptions[tool as keyof KaliToolOptions] });
   };
 
@@ -497,7 +639,7 @@ const ManualScan: React.FC = () => {
     if (!targetUrl) return;
     setLoading(true);
     try {
-      const result = await zapService.activeScan(targetUrl);  
+      const result = await zapService.activeScan(targetUrl);
       setResults(prev => [result, ...prev]);
     } catch (error) {
       console.error('Active scan failed:', error);
@@ -547,17 +689,17 @@ const ManualScan: React.FC = () => {
       alert('Lütfen önce Target URL girin!');
       return;
     }
-    
+
     setLoading(true);
     try {
       await zapService.openHudBrowser(targetUrl);
-      
+
       // HUD'ı etkinleştir
       await zapService.enableHud(true);
       setHudEnabled(true);
-      
+
       // Success message
-      
+
       alert(`🚀 Chrome tarayıcısı ZAP proxy ile başlatıldı!
 
 📋 HTTPS Manuel Test Yapmak İçin:
@@ -579,7 +721,7 @@ const ManualScan: React.FC = () => {
 - POST/GET isteklerini karıştırın
 
 ⚠️ Not: HTTPS sitelerde sertifika uyarıları normal - güvenlik testi yapıyoruz!`);
-      
+
     } catch (error) {
       console.error('Failed to open HUD browser:', error);
       alert('❌ Tarayıcı açılırken hata oluştu!\n\nHata: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
@@ -601,7 +743,7 @@ const ManualScan: React.FC = () => {
     if (!window.confirm('ZAP session\'ını temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
       return;
     }
-    
+
     setLoading(true);
     try {
       await zapService.clearSession();
@@ -623,7 +765,7 @@ const ManualScan: React.FC = () => {
 
   const sendModifiedRequest = async () => {
     if (!editableRequest) return;
-    
+
     setLoading(true);
     try {
       // Simulate sending modified request
@@ -642,7 +784,7 @@ const ManualScan: React.FC = () => {
           body: '{"status": "success", "modified": true}'
         }
       };
-      
+
       setResults(prev => [result, ...prev]);
       setDetailDialogOpen(false);
     } catch (error) {
@@ -708,14 +850,14 @@ const ManualScan: React.FC = () => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         alert('✅ Rapor başarıyla PDF formatında indirildi!');
       } else {
         throw new Error('Rapor oluşturulamadı');
       }
     } catch (error) {
       console.error('Report generation failed:', error);
-      
+
       // Fallback: JSON formatında indir
       const report = {
         timestamp: new Date().toISOString(),
@@ -737,7 +879,7 @@ const ManualScan: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       alert('⚠️ PDF raporu oluşturulamadı. JSON formatında indirildi.');
     } finally {
       setLoading(false);
@@ -745,7 +887,7 @@ const ManualScan: React.FC = () => {
   };
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       width: '100%',
       bgcolor: '#0d1117',
       color: '#e6edf3',
@@ -753,49 +895,49 @@ const ManualScan: React.FC = () => {
       p: 2
     }}>
       {/* Header */}
-      <Paper sx={{ 
-        p: 3, 
-        mb: 3, 
+      <Paper sx={{
+        p: 3,
+        mb: 3,
         bgcolor: '#21262d',
         border: '1px solid #30363d',
         borderRadius: 2
       }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom sx={{ 
-              color: '#58a6ff', 
+            <Typography variant="h4" component="h1" gutterBottom sx={{
+              color: '#58a6ff',
               fontWeight: 600,
               fontSize: '1.8rem'
             }}>
               🛡️ Manual Penetration Testing & Web Exploration
             </Typography>
             <Stack direction="row" spacing={1} mb={2}>
-              <Chip 
-                label="ZAP HUD Integration" 
-                color="primary" 
-                size="small" 
+              <Chip
+                label="ZAP HUD Integration"
+                color="primary"
+                size="small"
                 icon={<SecurityIcon />}
               />
-              <Chip 
-                label="Live Request Capture" 
-                color="secondary" 
+              <Chip
+                label="Live Request Capture"
+                color="secondary"
                 size="small"
                 icon={<HttpIcon />}
               />
-              <Chip 
-                label="Browser Automation" 
-                color="success" 
+              <Chip
+                label="Browser Automation"
+                color="success"
                 size="small"
                 icon={<LaunchIcon />}
               />
             </Stack>
           </Box>
-          
+
           {/* ZAP Status */}
           <Box textAlign="right">
             <Box display="flex" alignItems="center" gap={2} mb={1}>
-              <Badge 
-                color={zapStatus?.isRunning ? "success" : "error"} 
+              <Badge
+                color={zapStatus?.isRunning ? "success" : "error"}
                 variant="dot"
               >
                 <Typography variant="body2" sx={{ color: '#e6edf3' }}>
@@ -808,7 +950,7 @@ const ManualScan: React.FC = () => {
                 </Typography>
               )}
             </Box>
-            
+
             <Stack direction="row" spacing={1}>
               <Button
                 size="small"
@@ -825,7 +967,7 @@ const ManualScan: React.FC = () => {
                     bgcolor: hudEnabled ? '#1f6feb' : 'rgba(88, 166, 255, 0.1)'
                   },
                   '&:disabled': {
-                    bgcolor: '#21262d', 
+                    bgcolor: '#21262d',
                     color: '#7d8590',
                     borderColor: '#30363d'
                   }
@@ -865,7 +1007,7 @@ const ManualScan: React.FC = () => {
                 startIcon={<DownloadIcon />}
                 onClick={generateReport}
                 disabled={loading}
-                sx={{ 
+                sx={{
                   bgcolor: '#238636',
                   color: '#fff',
                   '&:hover': { bgcolor: '#2ea043' },
@@ -880,8 +1022,8 @@ const ManualScan: React.FC = () => {
 
         {/* Target Configuration */}
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ 
-            color: '#f0f6fc', 
+          <Typography variant="h6" gutterBottom sx={{
+            color: '#f0f6fc',
             fontSize: '1.1rem',
             mb: 2
           }}>
@@ -896,7 +1038,7 @@ const ManualScan: React.FC = () => {
               placeholder="https://example.com/"
               variant="outlined"
               helperText="Enter the URL you want to explore manually through ZAP proxy"
-              sx={{ 
+              sx={{
                 flex: 1,
                 '& .MuiOutlinedInput-root': {
                   bgcolor: '#0d1117',
@@ -920,10 +1062,10 @@ const ManualScan: React.FC = () => {
                 <Switch
                   checked={autoRefresh}
                   onChange={(e) => setAutoRefresh(e.target.checked)}
-                  sx={{ 
+                  sx={{
                     '& .MuiSwitch-switchBase.Mui-checked': { color: '#58a6ff' },
-                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { 
-                      backgroundColor: '#58a6ff' 
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#58a6ff'
                     }
                   }}
                 />
@@ -937,15 +1079,15 @@ const ManualScan: React.FC = () => {
 
       {/* Technology Information Section */}
       {detectedTechnologies.length > 0 && (
-        <Paper sx={{ 
-          p: 3, 
-          mb: 3, 
+        <Paper sx={{
+          p: 3,
+          mb: 3,
           bgcolor: '#21262d',
           border: '1px solid #30363d',
           borderRadius: 2
         }}>
-          <Typography variant="h6" sx={{ 
-            color: '#58a6ff', 
+          <Typography variant="h6" sx={{
+            color: '#58a6ff',
             fontWeight: 600,
             fontSize: '1.1rem',
             mb: 2,
@@ -954,17 +1096,17 @@ const ManualScan: React.FC = () => {
             gap: 1
           }}>
             🔧 Tespit Edilen Teknolojiler
-            <Chip 
+            <Chip
               label={`${detectedTechnologies.length} teknoloji`}
-              size="small" 
+              size="small"
               color="success"
             />
           </Typography>
-          
+
           <Typography variant="body2" sx={{ color: '#7d8590', mb: 2 }}>
             Bu teknolojiler otomatik tarama sırasında tespit edildi. Manuel testlerde bu bilgileri kullanarak hedefe yönelik saldırılar geliştirebilirsiniz.
           </Typography>
-          
+
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
             {detectedTechnologies.map((tech, index) => {
               const getColor = (type: string) => {
@@ -977,7 +1119,7 @@ const ManualScan: React.FC = () => {
                   default: return 'default';
                 }
               };
-              
+
               return (
                 <Chip
                   key={index}
@@ -993,7 +1135,7 @@ const ManualScan: React.FC = () => {
               );
             })}
           </Box>
-          
+
           {/* Technology-based Tool Recommendations */}
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" sx={{ color: '#58a6ff', fontWeight: 'bold', mb: 1 }}>
@@ -1025,14 +1167,14 @@ const ManualScan: React.FC = () => {
         {/* Left Panel - Tools & Controls */}
         <Box sx={{ flex: 1, minWidth: 400 }}>
           {/* ZAP Proxy Controls */}
-          <Paper sx={{ 
-            p: 2, 
-            mb: 2, 
+          <Paper sx={{
+            p: 2,
+            mb: 2,
             bgcolor: '#21262d',
             border: '1px solid #30363d',
             borderRadius: 2
           }}>
-            <Typography variant="h6" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{
               color: '#58a6ff',
               fontSize: '1.1rem',
               display: 'flex',
@@ -1041,28 +1183,28 @@ const ManualScan: React.FC = () => {
             }}>
               <SecurityIcon /> ZAP Proxy - Manuel Exploring
             </Typography>
-            
-            <Typography variant="body2" sx={{ 
-              color: '#7d8590', 
+
+            <Typography variant="body2" sx={{
+              color: '#7d8590',
               mb: 2,
               fontSize: '0.85rem'
             }}>
               🌐 ZAP HUD ile tarayıcıda manuel keşif yapın. Tüm istekler otomatik olarak yakalanacak.
             </Typography>
 
-            <Alert severity="info" sx={{ 
-              mb: 2, 
-              bgcolor: 'rgba(88, 166, 255, 0.1)', 
+            <Alert severity="info" sx={{
+              mb: 2,
+              bgcolor: 'rgba(88, 166, 255, 0.1)',
               border: '1px solid #58a6ff',
               '& .MuiAlert-message': { color: '#e6edf3' }
             }}>
               💡 <strong>Manuel Test İpuçları:</strong>
               <br />• Chrome açıldıktan sonra web sitesinde normal şekilde gezinin
-              <br />• Sayfanın sağ alt köşesinde ZAP HUD kontrolleri görünmelidir  
+              <br />• Sayfanın sağ alt köşesinde ZAP HUD kontrolleri görünmelidir
               <br />• Formları doldurun, linkler tıklayın, arama yapın
               <br />• Tüm HTTP istekleri otomatik olarak yakalanacak
             </Alert>
-            
+
             <Stack spacing={2}>
               <Button
                 variant="contained"
@@ -1081,7 +1223,7 @@ const ManualScan: React.FC = () => {
               >
                 {loading ? '🔄 Launching Browser...' : '🚀 Launch HUD Browser & Start Exploring'}
               </Button>
-              
+
               <Stack direction="row" spacing={2}>
                 <Button
                   variant="contained"
@@ -1097,7 +1239,7 @@ const ManualScan: React.FC = () => {
                 >
                   Spider Scan
                 </Button>
-                
+
                 <Button
                   variant="contained"
                   startIcon={<ScannerIcon />}
@@ -1117,14 +1259,14 @@ const ManualScan: React.FC = () => {
           </Paper>
 
           {/* Kali Linux Tools */}
-          <Paper sx={{ 
-            p: 2, 
-            mb: 2, 
+          <Paper sx={{
+            p: 2,
+            mb: 2,
             bgcolor: '#21262d',
             border: '1px solid #30363d',
             borderRadius: 2
           }}>
-            <Typography variant="h6" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{
               color: '#58a6ff',
               fontSize: '1.1rem',
               display: 'flex',
@@ -1133,10 +1275,10 @@ const ManualScan: React.FC = () => {
             }}>
               <TerminalIcon /> Kali Linux Arsenal
             </Typography>
-            
-            <Box sx={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
               gap: 1,
               mb: 2
             }}>
@@ -1158,16 +1300,16 @@ const ManualScan: React.FC = () => {
                   <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
                     <Box display="flex" alignItems="center" gap={1} mb={1}>
                       {tool.icon}
-                      <Typography variant="subtitle2" sx={{ 
-                        fontSize: '0.9rem', 
+                      <Typography variant="subtitle2" sx={{
+                        fontSize: '0.9rem',
                         fontWeight: 600,
                         color: '#e6edf3'
                       }}>
                         {tool.name}
                       </Typography>
                     </Box>
-                    <Typography variant="body2" sx={{ 
-                      fontSize: '0.75rem', 
+                    <Typography variant="body2" sx={{
+                      fontSize: '0.75rem',
                       color: '#7d8590',
                       mb: 1
                     }}>
@@ -1190,12 +1332,12 @@ const ManualScan: React.FC = () => {
 
             {/* Tool Options */}
             {selectedTool && toolOptions[selectedTool as keyof KaliToolOptions] && (
-              <Accordion sx={{ 
-                bgcolor: '#0d1117', 
+              <Accordion sx={{
+                bgcolor: '#0d1117',
                 border: '1px solid #30363d',
                 '&:before': { display: 'none' }
               }}>
-                <AccordionSummary 
+                <AccordionSummary
                   expandIcon={<ExpandMoreIcon sx={{ color: '#7d8590' }} />}
                   sx={{ color: '#e6edf3' }}
                 >
@@ -1215,7 +1357,7 @@ const ManualScan: React.FC = () => {
                         }))}
                         size="small"
                         fullWidth
-                        sx={{ 
+                        sx={{
                           '& .MuiOutlinedInput-root': {
                             bgcolor: '#0d1117',
                             color: '#e6edf3',
@@ -1239,7 +1381,7 @@ const ManualScan: React.FC = () => {
                             ...prev,
                             nmap: { ...prev.nmap!, timing: e.target.value as number }
                           }))}
-                          sx={{ 
+                          sx={{
                             bgcolor: '#0d1117',
                             color: '#e6edf3',
                             '& .MuiOutlinedInput-notchedOutline': { borderColor: '#30363d' },
@@ -1263,10 +1405,10 @@ const ManualScan: React.FC = () => {
                                 ...prev,
                                 nmap: { ...prev.nmap!, osDetection: e.target.checked }
                               }))}
-                              sx={{ 
+                              sx={{
                                 '& .MuiSwitch-switchBase.Mui-checked': { color: '#58a6ff' },
-                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { 
-                                  backgroundColor: '#58a6ff' 
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                  backgroundColor: '#58a6ff'
                                 }
                               }}
                             />
@@ -1282,10 +1424,10 @@ const ManualScan: React.FC = () => {
                                 ...prev,
                                 nmap: { ...prev.nmap!, serviceVersion: e.target.checked }
                               }))}
-                              sx={{ 
+                              sx={{
                                 '& .MuiSwitch-switchBase.Mui-checked': { color: '#58a6ff' },
-                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { 
-                                  backgroundColor: '#58a6ff' 
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                  backgroundColor: '#58a6ff'
                                 }
                               }}
                             />
@@ -1318,13 +1460,13 @@ const ManualScan: React.FC = () => {
           </Paper>
 
           {/* Custom Command */}
-          <Paper sx={{ 
-            p: 2, 
+          <Paper sx={{
+            p: 2,
             bgcolor: '#21262d',
             border: '1px solid #30363d',
             borderRadius: 2
           }}>
-            <Typography variant="h6" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{
               color: '#58a6ff',
               fontSize: '1.1rem',
               display: 'flex',
@@ -1333,7 +1475,7 @@ const ManualScan: React.FC = () => {
             }}>
               <CodeIcon /> Custom Command
             </Typography>
-            
+
             <TextField
               fullWidth
               label="Shell Command"
@@ -1343,7 +1485,7 @@ const ManualScan: React.FC = () => {
               variant="outlined"
               multiline
               rows={3}
-              sx={{ 
+              sx={{
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
                   bgcolor: '#0d1117',
@@ -1360,11 +1502,11 @@ const ManualScan: React.FC = () => {
                 }
               }}
             />
-            
+
             <Typography variant="body2" sx={{ mb: 2, color: '#7d8590', fontSize: '0.8rem' }}>
               💡 Use {"{target}"} placeholder for the target URL
             </Typography>
-            
+
             <Button
               variant="contained"
               fullWidth
@@ -1385,9 +1527,9 @@ const ManualScan: React.FC = () => {
         {/* Right Panel - Live Feed & Results */}
         <Box sx={{ flex: 1, minWidth: 500 }}>
           {/* Intercepted Requests Panel */}
-          <Paper sx={{ 
-            p: 2, 
-            mb: 2, 
+          <Paper sx={{
+            p: 2,
+            mb: 2,
             bgcolor: '#21262d',
             border: '1px solid #30363d',
             borderRadius: 2,
@@ -1396,22 +1538,22 @@ const ManualScan: React.FC = () => {
             flexDirection: 'column'
           }}>
             <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-              <Typography variant="h6" sx={{ 
+              <Typography variant="h6" sx={{
                 color: '#58a6ff',
                 fontSize: '1.1rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1
               }}>
-                <HttpIcon /> 
-                Captured HTTP Requests 
+                <HttpIcon />
+                Captured HTTP Requests
                 <Badge badgeContent={interceptedRequests.length} color="error" />
               </Typography>
-              
+
               <Stack direction="row" spacing={1}>
                 <Tooltip title="Refresh Requests Manually">
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={fetchInterceptedRequests}
                     sx={{ color: '#7d8590' }}
                   >
@@ -1419,8 +1561,8 @@ const ManualScan: React.FC = () => {
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Clear All Requests">
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={clearRequests}
                     sx={{ color: '#7d8590' }}
                   >
@@ -1428,7 +1570,7 @@ const ManualScan: React.FC = () => {
                   </IconButton>
                 </Tooltip>
                 <Tooltip title={autoRefresh ? "Disable Auto Refresh" : "Enable Auto Refresh"}>
-                  <IconButton 
+                  <IconButton
                     size="small"
                     onClick={() => setAutoRefresh(!autoRefresh)}
                     color={autoRefresh ? "primary" : "default"}
@@ -1440,18 +1582,18 @@ const ManualScan: React.FC = () => {
               </Stack>
             </Box>
 
-            <Box sx={{ 
-              flex: 1, 
+            <Box sx={{
+              flex: 1,
               overflow: 'auto',
               border: '1px solid #30363d',
               borderRadius: 1,
               bgcolor: '#0d1117'
             }}>
               {interceptedRequests.length === 0 ? (
-                <Box sx={{ 
-                  p: 4, 
-                  textAlign: 'center', 
-                  color: '#7d8590' 
+                <Box sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  color: '#7d8590'
                 }}>
                   <HttpIcon sx={{ fontSize: 48, mb: 2, opacity: 0.3 }} />
                   <Typography variant="body2" sx={{ textAlign: 'center' }}>
@@ -1481,11 +1623,11 @@ const ManualScan: React.FC = () => {
               ) : (
                 <List dense>
                   {interceptedRequests.map((request, index) => (
-                    <ListItem 
+                    <ListItem
                       key={request.id}
                       component="div"
                       onClick={() => showRequestDetails(request)}
-                      sx={{ 
+                      sx={{
                         borderBottom: '1px solid #30363d',
                         '&:hover': { bgcolor: '#21262d' },
                         cursor: 'pointer'
@@ -1497,12 +1639,12 @@ const ManualScan: React.FC = () => {
                           size="small"
                           color={
                             request.method === 'GET' ? 'info' :
-                            request.method === 'POST' ? 'warning' :
-                            request.method === 'PUT' ? 'secondary' :
-                            request.method === 'DELETE' ? 'error' : 'default'
+                              request.method === 'POST' ? 'warning' :
+                                request.method === 'PUT' ? 'secondary' :
+                                  request.method === 'DELETE' ? 'error' : 'default'
                           }
-                          sx={{ 
-                            minWidth: 60, 
+                          sx={{
+                            minWidth: 60,
                             fontSize: '0.7rem',
                             fontWeight: 'bold'
                           }}
@@ -1510,7 +1652,7 @@ const ManualScan: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Typography variant="body2" sx={{ 
+                          <Typography variant="body2" sx={{
                             color: '#e6edf3',
                             fontSize: '0.85rem',
                             fontFamily: 'Monaco, Consolas, monospace'
@@ -1529,8 +1671,8 @@ const ManualScan: React.FC = () => {
                                 size="small"
                                 color={
                                   request.status < 300 ? 'success' :
-                                  request.status < 400 ? 'info' :
-                                  request.status < 500 ? 'warning' : 'error'
+                                    request.status < 400 ? 'info' :
+                                      request.status < 500 ? 'warning' : 'error'
                                 }
                                 sx={{ fontSize: '0.65rem', height: 16 }}
                               />
@@ -1552,13 +1694,13 @@ const ManualScan: React.FC = () => {
           </Paper>
 
           {/* Scan Results */}
-          <Paper sx={{ 
-            p: 2, 
+          <Paper sx={{
+            p: 2,
             bgcolor: '#21262d',
             border: '1px solid #30363d',
             borderRadius: 2
           }}>
-            <Typography variant="h6" gutterBottom sx={{ 
+            <Typography variant="h6" gutterBottom sx={{
               color: '#58a6ff',
               fontSize: '1.1rem',
               display: 'flex',
@@ -1569,21 +1711,21 @@ const ManualScan: React.FC = () => {
             </Typography>
 
             {loading && (
-              <LinearProgress 
-                sx={{ 
+              <LinearProgress
+                sx={{
                   mb: 2,
                   bgcolor: '#30363d',
                   '& .MuiLinearProgress-bar': { bgcolor: '#58a6ff' }
-                }} 
+                }}
               />
             )}
 
             <Box sx={{ maxHeight: '400px', overflow: 'auto' }}>
               {results.length === 0 ? (
-                <Box sx={{ 
-                  p: 4, 
-                  textAlign: 'center', 
-                  color: '#7d8590' 
+                <Box sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  color: '#7d8590'
                 }}>
                   <AssessmentIcon sx={{ fontSize: 48, mb: 2, opacity: 0.3 }} />
                   <Typography variant="body2">
@@ -1592,23 +1734,23 @@ const ManualScan: React.FC = () => {
                 </Box>
               ) : (
                 results.map((result, index) => (
-                  <Card key={result.id} sx={{ 
-                    mb: 2, 
+                  <Card key={result.id} sx={{
+                    mb: 2,
                     bgcolor: '#0d1117',
                     border: '1px solid #30363d'
                   }}>
                     <CardContent sx={{ p: 2 }}>
                       <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                         <Box>
-                          <Typography variant="subtitle1" sx={{ 
-                            fontSize: '0.95rem', 
+                          <Typography variant="subtitle1" sx={{
+                            fontSize: '0.95rem',
                             fontWeight: 600,
                             color: '#e6edf3'
                           }}>
                             {result.tool}
                           </Typography>
-                          <Typography variant="body2" sx={{ 
-                            color: '#7d8590', 
+                          <Typography variant="body2" sx={{
+                            color: '#7d8590',
                             fontSize: '0.8rem',
                             fontFamily: 'Monaco, Consolas, monospace'
                           }}>
@@ -1623,16 +1765,16 @@ const ManualScan: React.FC = () => {
                           size="small"
                           color={
                             result.severity === 'critical' ? 'error' :
-                            result.severity === 'high' ? 'warning' :
-                            result.severity === 'medium' ? 'info' : 'success'
+                              result.severity === 'high' ? 'warning' :
+                                result.severity === 'medium' ? 'info' : 'success'
                           }
                           sx={{ fontWeight: 'bold' }}
                         />
                       </Box>
-                      
+
                       {result.findings && result.findings.length > 0 && (
                         <Box sx={{ mb: 2 }}>
-                          <Typography variant="body2" sx={{ 
+                          <Typography variant="body2" sx={{
                             fontSize: '0.85rem',
                             color: '#e6edf3',
                             mb: 1
@@ -1640,9 +1782,9 @@ const ManualScan: React.FC = () => {
                             📋 <strong>Findings ({result.findings.length}):</strong>
                           </Typography>
                           <Box sx={{ ml: 2 }}>
-                            {result.findings.slice(0, 3).map((finding, idx) => (
-                              <Typography key={idx} variant="body2" sx={{ 
-                                fontSize: '0.8rem', 
+                            {result.findings.slice(0, expandedResults.has(result.id) ? undefined : 3).map((finding, idx) => (
+                              <Typography key={idx} variant="body2" sx={{
+                                fontSize: '0.8rem',
                                 color: '#7d8590',
                                 mb: 0.5
                               }}>
@@ -1650,12 +1792,33 @@ const ManualScan: React.FC = () => {
                               </Typography>
                             ))}
                             {result.findings.length > 3 && (
-                              <Typography variant="body2" sx={{ 
-                                fontSize: '0.8rem', 
-                                color: '#58a6ff',
-                                cursor: 'pointer'
-                              }}>
-                                ... and {result.findings.length - 3} more
+                              <Typography
+                                variant="body2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedResults(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(result.id)) {
+                                      next.delete(result.id);
+                                    } else {
+                                      next.add(result.id);
+                                    }
+                                    return next;
+                                  });
+                                }}
+                                sx={{
+                                  fontSize: '0.8rem',
+                                  color: '#58a6ff',
+                                  cursor: 'pointer',
+                                  '&:hover': {
+                                    textDecoration: 'underline'
+                                  }
+                                }}
+                              >
+                                {expandedResults.has(result.id)
+                                  ? '▲ Show less'
+                                  : `... and ${result.findings.length - 3} more`
+                                }
                               </Typography>
                             )}
                           </Box>
@@ -1666,14 +1829,11 @@ const ManualScan: React.FC = () => {
                         variant="outlined"
                         size="small"
                         startIcon={<InfoIcon />}
-                        onClick={() => showRequestDetails(result.request || {
-                          id: result.id,
-                          method: 'GET',
-                          url: targetUrl,
-                          headers: {},
-                          timestamp: result.timestamp
-                        })}
-                        sx={{ 
+                        onClick={() => {
+                          setSelectedScanResult(result);
+                          setScanResultDialogOpen(true);
+                        }}
+                        sx={{
                           color: '#e6edf3',
                           borderColor: '#30363d',
                           '&:hover': {
@@ -1708,8 +1868,8 @@ const ManualScan: React.FC = () => {
           }
         }}
       >
-        <DialogTitle sx={{ 
-          bgcolor: '#21262d', 
+        <DialogTitle sx={{
+          bgcolor: '#21262d',
           borderBottom: '1px solid #30363d',
           display: 'flex',
           alignItems: 'center',
@@ -1718,12 +1878,12 @@ const ManualScan: React.FC = () => {
           <HttpIcon />
           Request/Response Inspector
         </DialogTitle>
-        
+
         <DialogContent sx={{ p: 0 }}>
-          <Tabs 
-            value={selectedTab} 
+          <Tabs
+            value={selectedTab}
             onChange={(e, newValue) => setSelectedTab(newValue)}
-            sx={{ 
+            sx={{
               borderBottom: '1px solid #30363d',
               bgcolor: '#21262d',
               '& .MuiTab-root': {
@@ -1744,14 +1904,14 @@ const ManualScan: React.FC = () => {
                 <Typography variant="h6" gutterBottom sx={{ color: '#58a6ff', mb: 2 }}>
                   Request Details
                 </Typography>
-                <Paper sx={{ 
-                  bgcolor: '#21262d', 
-                  p: 2, 
+                <Paper sx={{
+                  bgcolor: '#21262d',
+                  p: 2,
                   mb: 2,
                   border: '1px solid #30363d'
                 }}>
-                  <Typography variant="body2" component="pre" sx={{ 
-                    fontFamily: 'Monaco, Consolas, monospace', 
+                  <Typography variant="body2" component="pre" sx={{
+                    fontFamily: 'Monaco, Consolas, monospace',
                     fontSize: '0.85rem',
                     color: '#e6edf3',
                     whiteSpace: 'pre-wrap'
@@ -1770,13 +1930,13 @@ ${selectedRequest.body || ''}`}
                 <Typography variant="h6" gutterBottom sx={{ color: '#58a6ff', mb: 2 }}>
                   Response Details
                 </Typography>
-                <Paper sx={{ 
-                  bgcolor: '#21262d', 
+                <Paper sx={{
+                  bgcolor: '#21262d',
                   p: 2,
                   border: '1px solid #30363d'
                 }}>
-                  <Typography variant="body2" component="pre" sx={{ 
-                    fontFamily: 'Monaco, Consolas, monospace', 
+                  <Typography variant="body2" component="pre" sx={{
+                    fontFamily: 'Monaco, Consolas, monospace',
                     fontSize: '0.85rem',
                     color: '#e6edf3',
                     whiteSpace: 'pre-wrap'
@@ -1801,10 +1961,10 @@ ${selectedRequest.responseBody || 'No response body captured'}`}
                       <InputLabel sx={{ color: '#7d8590' }}>Method</InputLabel>
                       <Select
                         value={editableRequest.method}
-                        onChange={(e) => setEditableRequest(prev => prev ? 
+                        onChange={(e) => setEditableRequest(prev => prev ?
                           { ...prev, method: e.target.value } : null
                         )}
-                        sx={{ 
+                        sx={{
                           bgcolor: '#21262d',
                           color: '#e6edf3',
                           '& .MuiOutlinedInput-notchedOutline': { borderColor: '#30363d' }
@@ -1821,10 +1981,10 @@ ${selectedRequest.responseBody || 'No response body captured'}`}
                       fullWidth
                       label="URL"
                       value={editableRequest.url}
-                      onChange={(e) => setEditableRequest(prev => prev ? 
+                      onChange={(e) => setEditableRequest(prev => prev ?
                         { ...prev, url: e.target.value } : null
                       )}
-                      sx={{ 
+                      sx={{
                         '& .MuiOutlinedInput-root': {
                           bgcolor: '#21262d',
                           color: '#e6edf3',
@@ -1849,7 +2009,7 @@ ${selectedRequest.responseBody || 'No response body captured'}`}
                         // Invalid JSON
                       }
                     }}
-                    sx={{ 
+                    sx={{
                       '& .MuiOutlinedInput-root': {
                         bgcolor: '#21262d',
                         color: '#e6edf3',
@@ -1866,10 +2026,10 @@ ${selectedRequest.responseBody || 'No response body captured'}`}
                     multiline
                     rows={6}
                     value={editableRequest.body || ''}
-                    onChange={(e) => setEditableRequest(prev => prev ? 
+                    onChange={(e) => setEditableRequest(prev => prev ?
                       { ...prev, body: e.target.value } : null
                     )}
-                    sx={{ 
+                    sx={{
                       '& .MuiOutlinedInput-root': {
                         bgcolor: '#21262d',
                         color: '#e6edf3',
@@ -1884,13 +2044,13 @@ ${selectedRequest.responseBody || 'No response body captured'}`}
             )}
           </Box>
         </DialogContent>
-        
-        <DialogActions sx={{ 
-          p: 3, 
-          bgcolor: '#21262d', 
+
+        <DialogActions sx={{
+          p: 3,
+          bgcolor: '#21262d',
           borderTop: '1px solid #30363d'
         }}>
-          <Button 
+          <Button
             onClick={() => setDetailDialogOpen(false)}
             sx={{ color: '#7d8590' }}
           >
@@ -1910,6 +2070,192 @@ ${selectedRequest.responseBody || 'No response body captured'}`}
               Send Modified Request
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Scan Result Details Dialog */}
+      <Dialog
+        open={scanResultDialogOpen}
+        onClose={() => setScanResultDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: '#0d1117',
+            color: '#e6edf3',
+            border: '1px solid #30363d',
+            maxHeight: '85vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          bgcolor: '#21262d',
+          borderBottom: '1px solid #30363d',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <AssessmentIcon sx={{ color: '#58a6ff' }} />
+            <Typography variant="h6">Scan Result Details</Typography>
+          </Box>
+          {selectedScanResult && (
+            <Chip
+              label={selectedScanResult.severity.toUpperCase()}
+              size="small"
+              color={
+                selectedScanResult.severity === 'critical' ? 'error' :
+                  selectedScanResult.severity === 'high' ? 'warning' :
+                    selectedScanResult.severity === 'medium' ? 'info' : 'success'
+              }
+              sx={{ fontWeight: 'bold' }}
+            />
+          )}
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 3 }}>
+          {selectedScanResult && (
+            <Box>
+              {/* Tool Info */}
+              <Paper sx={{ p: 2, mb: 2, bgcolor: '#21262d', border: '1px solid #30363d' }}>
+                <Typography variant="subtitle1" sx={{ color: '#58a6ff', fontWeight: 600, mb: 1 }}>
+                  🛠️ Tool Information
+                </Typography>
+                <Box display="flex" flexDirection="column" gap={1}>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" sx={{ color: '#7d8590' }}>Tool:</Typography>
+                    <Typography variant="body2" sx={{ color: '#e6edf3', fontWeight: 500 }}>
+                      {selectedScanResult.tool}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" sx={{ color: '#7d8590' }}>Timestamp:</Typography>
+                    <Typography variant="body2" sx={{ color: '#e6edf3' }}>
+                      {new Date(selectedScanResult.timestamp).toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" sx={{ color: '#7d8590' }}>Duration:</Typography>
+                    <Typography variant="body2" sx={{ color: '#e6edf3' }}>
+                      {selectedScanResult.duration}ms
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+
+              {/* Command */}
+              <Paper sx={{ p: 2, mb: 2, bgcolor: '#21262d', border: '1px solid #30363d' }}>
+                <Typography variant="subtitle1" sx={{ color: '#58a6ff', fontWeight: 600, mb: 1 }}>
+                  💻 Command Executed
+                </Typography>
+                <Box sx={{
+                  bgcolor: '#0d1117',
+                  p: 1.5,
+                  borderRadius: 1,
+                  fontFamily: 'Monaco, Consolas, monospace',
+                  fontSize: '0.85rem',
+                  color: '#7ee787',
+                  overflowX: 'auto'
+                }}>
+                  $ {selectedScanResult.command}
+                </Box>
+              </Paper>
+
+              {/* Findings */}
+              {selectedScanResult.findings && selectedScanResult.findings.length > 0 && (
+                <Paper sx={{ p: 2, mb: 2, bgcolor: '#21262d', border: '1px solid #30363d' }}>
+                  <Typography variant="subtitle1" sx={{ color: '#58a6ff', fontWeight: 600, mb: 1 }}>
+                    📋 Findings ({selectedScanResult.findings.length})
+                  </Typography>
+                  <Box sx={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {selectedScanResult.findings.map((finding, idx) => (
+                      <Box key={idx} sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1,
+                        mb: 1,
+                        p: 1,
+                        bgcolor: '#0d1117',
+                        borderRadius: 1,
+                        borderLeft: '3px solid #58a6ff'
+                      }}>
+                        <Typography variant="body2" sx={{ color: '#7d8590', minWidth: 20 }}>
+                          {idx + 1}.
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#e6edf3' }}>
+                          {finding}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Paper>
+              )}
+
+              {/* Recommendations */}
+              {selectedScanResult.recommendations && selectedScanResult.recommendations.length > 0 && (
+                <Paper sx={{ p: 2, bgcolor: '#21262d', border: '1px solid #30363d' }}>
+                  <Typography variant="subtitle1" sx={{ color: '#7ee787', fontWeight: 600, mb: 1 }}>
+                    ✅ Recommendations
+                  </Typography>
+                  <Box>
+                    {selectedScanResult.recommendations.map((rec, idx) => (
+                      <Box key={idx} sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1,
+                        mb: 1,
+                        p: 1,
+                        bgcolor: '#0d1117',
+                        borderRadius: 1,
+                        borderLeft: '3px solid #7ee787'
+                      }}>
+                        <Typography variant="body2" sx={{ color: '#7d8590', minWidth: 20 }}>
+                          •
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#e6edf3' }}>
+                          {rec}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Paper>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{
+          p: 2,
+          bgcolor: '#21262d',
+          borderTop: '1px solid #30363d'
+        }}>
+          <Button
+            onClick={() => setScanResultDialogOpen(false)}
+            sx={{ color: '#7d8590' }}
+          >
+            Close
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<DownloadIcon />}
+            onClick={() => {
+              if (selectedScanResult) {
+                const blob = new Blob([JSON.stringify(selectedScanResult, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `scan-result-${selectedScanResult.id}.json`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+              }
+            }}
+            sx={{
+              bgcolor: '#58a6ff',
+              '&:hover': { bgcolor: '#1f6feb' }
+            }}
+          >
+            Export JSON
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

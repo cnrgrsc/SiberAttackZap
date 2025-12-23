@@ -7,7 +7,6 @@ import {
   LinearProgress,
   List,
   ListItem,
-  ListItemText,
   Chip,
   Divider,
   IconButton,
@@ -16,7 +15,6 @@ import {
 } from '@mui/material';
 import {
   HourglassEmpty as QueueIcon,
-  PlayArrow as ActiveIcon,
   Person as PersonIcon,
   Schedule as ScheduleIcon,
   Refresh as RefreshIcon,
@@ -150,8 +148,8 @@ const QueueStatusWidget: React.FC = () => {
                   usagePercentage >= 100
                     ? '#f44336'
                     : usagePercentage >= 66
-                    ? '#ff9800'
-                    : '#4caf50',
+                      ? '#ff9800'
+                      : '#4caf50',
               },
             }}
           />
@@ -251,8 +249,8 @@ const QueueStatusWidget: React.FC = () => {
                             item.priority === 1
                               ? 'error'
                               : item.priority <= 3
-                              ? 'warning'
-                              : 'default'
+                                ? 'warning'
+                                : 'default'
                           }
                         />
                         <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>

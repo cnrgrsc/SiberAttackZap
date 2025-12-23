@@ -29,7 +29,6 @@ import {
   Refresh as RefreshIcon,
   PlayArrow as PlayArrowIcon,
   Settings as SettingsIcon,
-  CheckCircle as CheckCircleIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
 import { zapService } from '../../services/zapService';
@@ -111,7 +110,7 @@ const TechnologyScanner: React.FC = () => {
 
   const getTechnologyRecommendations = (technologies: TechnologyResult[]) => {
     const recommendations = [];
-    
+
     if (technologies.some(t => t.name?.toLowerCase().includes('javascript') || t.type?.toLowerCase().includes('javascript'))) {
       recommendations.push({
         icon: <WebIcon color="info" />,
@@ -119,7 +118,7 @@ const TechnologyScanner: React.FC = () => {
         description: 'JavaScript framework tespit edildi - Dinamik içerik taraması için AJAX Spider kullanın'
       });
     }
-    
+
     if (technologies.some(t => t.type?.toLowerCase().includes('database'))) {
       recommendations.push({
         icon: <StorageIcon color="error" />,
@@ -127,7 +126,7 @@ const TechnologyScanner: React.FC = () => {
         description: 'Database tespit edildi - SQL Injection ve database zafiyetleri için yoğun tarama yapın'
       });
     }
-    
+
     if (technologies.some(t => t.type?.toLowerCase().includes('cms'))) {
       recommendations.push({
         icon: <LanguageIcon color="warning" />,
@@ -135,7 +134,7 @@ const TechnologyScanner: React.FC = () => {
         description: 'Content Management System tespit edildi - CMS specific zafiyetler için özel araçlar kullanın'
       });
     }
-    
+
     if (technologies.some(t => t.name?.toLowerCase().includes('php'))) {
       recommendations.push({
         icon: <CodeIcon color="secondary" />,
@@ -169,7 +168,7 @@ const TechnologyScanner: React.FC = () => {
           <Typography variant="body2" color="text.secondary" paragraph>
             Teknolojilerini tespit etmek istediğiniz web sitesinin URL'sini girin
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'start' }}>
             <TextField
               fullWidth
@@ -179,8 +178,8 @@ const TechnologyScanner: React.FC = () => {
               onChange={(e) => setTargetUrl(e.target.value)}
               error={Boolean(targetUrl && !isValidUrl(targetUrl))}
               helperText={
-                targetUrl && !isValidUrl(targetUrl) 
-                  ? 'Lütfen geçerli bir URL girin (https:// ile başlamalı)' 
+                targetUrl && !isValidUrl(targetUrl)
+                  ? 'Lütfen geçerli bir URL girin (https:// ile başlamalı)'
                   : 'Analiz edilecek web sitesinin ana URL\'si'
               }
               sx={{ mb: 2 }}
@@ -200,8 +199,8 @@ const TechnologyScanner: React.FC = () => {
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {error}
-              <Button 
-                size="small" 
+              <Button
+                size="small"
                 onClick={() => setError(null)}
                 sx={{ ml: 2 }}
               >
@@ -238,13 +237,13 @@ const TechnologyScanner: React.FC = () => {
                   ✅ Teknoloji Tespiti Tamamlandı
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Chip 
+                  <Chip
                     label={`${detectedTechnologies.length} teknoloji tespit edildi`}
                     color="success"
                     size="small"
                   />
-                  <IconButton 
-                    size="small" 
+                  <IconButton
+                    size="small"
                     onClick={detectTechnologies}
                     title="Tekrar tespit et"
                   >
@@ -275,11 +274,11 @@ const TechnologyScanner: React.FC = () => {
               <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
                 📋 Detaylı Teknoloji Analizi
               </Typography>
-              
+
               {['Web Server', 'Programming Language', 'Database', 'JavaScript Framework', 'CMS', 'Session Management'].map(type => {
                 const techsOfType = detectedTechnologies.filter(tech => tech.type === type);
                 if (techsOfType.length === 0) return null;
-                
+
                 return (
                   <Box key={type} sx={{ mb: 2 }}>
                     <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
@@ -342,11 +341,11 @@ const TechnologyScanner: React.FC = () => {
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => navigate('/automated-scan', { 
-                    state: { 
+                  onClick={() => navigate('/automated-scan', {
+                    state: {
                       targetUrl: targetUrl,
-                      detectedTechnologies: detectedTechnologies 
-                    } 
+                      detectedTechnologies: detectedTechnologies
+                    }
                   })}
                   sx={{ mt: 2 }}
                 >
@@ -354,7 +353,7 @@ const TechnologyScanner: React.FC = () => {
                 </Button>
               </Paper>
             </Grid>
-            
+
             <Grid size={{ xs: 12, md: 6 }}>
               <Paper sx={{ p: 3, textAlign: 'center' }}>
                 <SettingsIcon color="secondary" sx={{ fontSize: 48, mb: 1 }} />
@@ -367,11 +366,11 @@ const TechnologyScanner: React.FC = () => {
                 <Button
                   variant="outlined"
                   fullWidth
-                  onClick={() => navigate('/manual-scan', { 
-                    state: { 
+                  onClick={() => navigate('/manual-scan', {
+                    state: {
                       targetUrl: targetUrl,
-                      detectedTechnologies: detectedTechnologies 
-                    } 
+                      detectedTechnologies: detectedTechnologies
+                    }
                   })}
                   sx={{ mt: 2 }}
                 >
@@ -393,9 +392,9 @@ const TechnologyScanner: React.FC = () => {
             </Typography>
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Bu araç, web sitelerinde kullanılan teknolojileri tespit etmek için ZAP Proxy'nin pasif analiz özelliklerini kullanır. 
-            HTTP header'ları, HTML içeriği ve server yanıtları analiz edilerek kullanılan web server, programlama dili, 
-            veritabanı, JavaScript framework'leri ve diğer teknolojiler tespit edilir. Bu bilgiler, hedefe yönelik 
+            Bu araç, web sitelerinde kullanılan teknolojileri tespit etmek için ZAP Proxy'nin pasif analiz özelliklerini kullanır.
+            HTTP header'ları, HTML içeriği ve server yanıtları analiz edilerek kullanılan web server, programlama dili,
+            veritabanı, JavaScript framework'leri ve diğer teknolojiler tespit edilir. Bu bilgiler, hedefe yönelik
             güvenlik taraması stratejinizi optimize etmenize yardımcı olur.
           </Typography>
         </CardContent>

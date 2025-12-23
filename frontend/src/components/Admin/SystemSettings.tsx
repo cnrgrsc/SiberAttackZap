@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
-  CardContent,
   Typography,
   TextField,
   Button,
@@ -104,7 +103,7 @@ const SystemSettings: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   // SMTP Settings
   const [smtpSettings, setSmtpSettings] = useState<SmtpSettings>({
     host: '',
@@ -155,7 +154,7 @@ const SystemSettings: React.FC = () => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      
+
       const [smtpResponse, cicdResponse, generalResponse] = await Promise.all([
         api.get('/admin/settings/smtp'),
         api.get('/admin/settings/cicd'),
@@ -187,7 +186,7 @@ const SystemSettings: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.post('/admin/settings/smtp', smtpSettings);
-      
+
       if ((response as any)?.success) {
         setMessage({ type: 'success', text: 'SMTP ayarları başarıyla kaydedildi' });
       } else {
@@ -210,7 +209,7 @@ const SystemSettings: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.post('/admin/settings/smtp/test', { testEmail });
-      
+
       if ((response as any)?.success) {
         setMessage({ type: 'success', text: `Test emaili ${testEmail} adresine gönderildi` });
       } else {
@@ -228,7 +227,7 @@ const SystemSettings: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.post('/admin/settings/cicd', cicdSettings);
-      
+
       if ((response as any)?.success) {
         setMessage({ type: 'success', text: 'CI/CD ayarları başarıyla kaydedildi' });
       } else {
@@ -246,7 +245,7 @@ const SystemSettings: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.post('/admin/settings/general', generalSettings);
-      
+
       if ((response as any)?.success) {
         setMessage({ type: 'success', text: 'Genel ayarlar başarıyla kaydedildi' });
       } else {
@@ -266,7 +265,7 @@ const SystemSettings: React.FC = () => {
       const response = await api.post('/admin/settings/cicd/api-key', {
         keyName: 'Pipeline API Key'
       });
-      
+
       if ((response as any)?.success) {
         setMessage({ type: 'success', text: 'Yeni API key oluşturuldu' });
         await loadSettings(); // Reload to get updated keys
@@ -292,7 +291,7 @@ const SystemSettings: React.FC = () => {
       const response = await api.delete('/admin/settings/cicd/api-key', {
         data: { apiKey }
       });
-      
+
       if ((response as any)?.success) {
         setMessage({ type: 'success', text: 'API key silindi' });
         await loadSettings();
@@ -336,8 +335,8 @@ const SystemSettings: React.FC = () => {
       </Typography>
 
       {message && (
-        <Alert 
-          severity={message.type} 
+        <Alert
+          severity={message.type}
           onClose={() => setMessage(null)}
           sx={{ mb: 2 }}
         >
@@ -359,7 +358,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             📧 Email (SMTP) Konfigürasyonu
           </Typography>
-          
+
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
@@ -437,7 +436,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             🧪 Email Test
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
             <TextField
               label="Test Email Adresi"
@@ -473,7 +472,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             🔐 CI/CD API Keys
           </Typography>
-          
+
           <Box sx={{ mb: 3 }}>
             <Button
               variant="contained"
@@ -483,7 +482,7 @@ const SystemSettings: React.FC = () => {
             >
               Yeni API Key Oluştur
             </Button>
-            
+
             <List>
               {cicdSettings.apiKeys.map((apiKey, index) => (
                 <ListItem key={index} divider>
@@ -493,8 +492,8 @@ const SystemSettings: React.FC = () => {
                         <Typography variant="body1" component="span">
                           {apiKey.key}
                         </Typography>
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           onClick={() => copyToClipboard(apiKey.fullKey)}
                           title="Full key'i kopyala"
                         >
@@ -531,7 +530,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             🌐 Genel Ayarlar
           </Typography>
-          
+
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
               <TextField
@@ -551,7 +550,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             📧 Varsayılan Email Alıcıları
           </Typography>
-          
+
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <TextField
               label="Email Adresi"
@@ -587,7 +586,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             🛡️ Güvenlik Kapıları
           </Typography>
-          
+
           <Grid container spacing={3}>
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
@@ -659,7 +658,7 @@ const SystemSettings: React.FC = () => {
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <SettingsIcon /> Genel Sistem Ayarları
           </Typography>
-          
+
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* Uygulama Bilgileri */}
             <Box>
@@ -850,8 +849,8 @@ const SystemSettings: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNewApiKeyDialog(false)}>İptal</Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={generateNewApiKey}
             disabled={loading}
           >

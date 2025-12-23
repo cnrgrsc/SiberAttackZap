@@ -327,6 +327,17 @@ model EmailPreference {
   weeklyReport  Boolean @default(true)
   monthlyReport Boolean @default(false)
   dailyDigest   Boolean @default(false)
+  // Trivy Scanner Preferences
+  trivyEnabled          Boolean @default(true)
+  trivyScanCompleted    Boolean @default(true)
+  trivyScanFailed       Boolean @default(true)
+  trivyVulnCritical     Boolean @default(true)
+  trivyVulnHigh         Boolean @default(true)
+  // Lighthouse Scanner Preferences
+  lighthouseEnabled       Boolean @default(true)
+  lighthouseScanCompleted Boolean @default(true)
+  lighthouseScanFailed    Boolean @default(true)
+  lighthouseLowScore      Boolean @default(true)
   user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("email_preferences")

@@ -3,27 +3,17 @@ import {
   Box,
   Typography,
   Chip,
-  IconButton,
-  Collapse,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Card,
   CardContent,
-  Tooltip,
   Accordion,
   AccordionSummary,
   AccordionDetails
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
-  ChevronRight as ChevronRightIcon,
   Language as LanguageIcon,
   Folder as FolderIcon,
   InsertDriveFile as FileIcon,
-  Visibility as VisibilityIcon,
-  GetApp as GetAppIcon,
   Security as SecurityIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon
@@ -49,12 +39,14 @@ interface UrlTreeViewProps {
   vulnerabilityCount?: { [url: string]: number };
 }
 
-const UrlTreeView: React.FC<UrlTreeViewProps> = ({ 
-  urls, 
-  onUrlSelect, 
-  vulnerabilityCount = {} 
+const UrlTreeView: React.FC<UrlTreeViewProps> = ({
+  urls,
+  onUrlSelect,
+  vulnerabilityCount = {}
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [expanded, setExpanded] = useState<string[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selected, setSelected] = useState<string>('');
 
   // Build tree structure from URLs
@@ -68,7 +60,7 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
         const urlString = typeof urlEntry === 'string' ? urlEntry : urlEntry.url;
         const urlObj = new URL(urlString);
         const siteKey = `${urlObj.protocol}//${urlObj.host}`;
-        
+
         // Create site node if not exists
         if (!tree[siteKey]) {
           tree[siteKey] = {
@@ -95,11 +87,11 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
         pathParts.forEach((part, partIndex) => {
           currentPath += '/' + part;
           const nodeKey = siteKey + currentPath;
-          
+
           if (!tree[nodeKey]) {
             const isLastPart = partIndex === pathParts.length - 1;
             const hasExtension = part.includes('.');
-            
+
             tree[nodeKey] = {
               id: nodeKey,
               name: part,
@@ -113,12 +105,12 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
               type: (isLastPart && hasExtension) ? 'file' : 'folder',
               vulnerabilities: vulnerabilityCount[urlString] || 0
             };
-            
+
             if (currentNode.children) {
               currentNode.children.push(tree[nodeKey]);
             }
           }
-          
+
           currentNode = tree[nodeKey];
         });
 
@@ -139,7 +131,7 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
               type: 'file',
               vulnerabilities: vulnerabilityCount[urlString] || 0
             };
-            
+
             if (currentNode.children) {
               currentNode.children.push(tree[queryNodeKey]);
             }
@@ -178,11 +170,11 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
   const renderTreeNode = (node: UrlTreeNode, depth: number = 0) => {
     const vulnerabilityCount = node.vulnerabilities || 0;
     const hasChildren = node.children && node.children.length > 0;
-    
+
     return (
       <Box key={node.id} sx={{ ml: depth * 2 }}>
-        <Accordion 
-          sx={{ 
+        <Accordion
+          sx={{
             boxShadow: 'none',
             '&:before': { display: 'none' },
             border: '1px solid',
@@ -191,7 +183,7 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
         >
           <AccordionSummary
             expandIcon={hasChildren ? <ExpandMoreIcon /> : null}
-            sx={{ 
+            sx={{
               minHeight: 40,
               '& .MuiAccordionSummary-content': { margin: '8px 0' }
             }}
@@ -201,19 +193,19 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
               <Typography variant="body2" sx={{ fontWeight: selected === node.id ? 'bold' : 'normal' }}>
                 {node.name}
               </Typography>
-              
+
               {node.type === 'file' && (
                 <>
-                  <Chip 
-                    label={node.statusCode} 
-                    size="small" 
+                  <Chip
+                    label={node.statusCode}
+                    size="small"
                     color={getStatusColor(node.statusCode) as any}
                     sx={{ minWidth: 40, height: 20, fontSize: '0.7rem' }}
                   />
                   <Typography variant="caption" color="text.secondary">
                     {node.method}
                   </Typography>
-                  
+
                   {vulnerabilityCount > 0 && (
                     <Chip
                       icon={<SecurityIcon />}
@@ -223,7 +215,7 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
                       sx={{ height: 20, fontSize: '0.7rem' }}
                     />
                   )}
-                  
+
                   <Typography variant="caption" color="text.secondary">
                     {(node.size / 1024).toFixed(1)}KB
                   </Typography>
@@ -232,7 +224,7 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
                   </Typography>
                 </>
               )}
-              
+
               {node.type === 'folder' && node.children && (
                 <Typography variant="caption" color="text.secondary">
                   ({node.children.length} items)
@@ -240,7 +232,7 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
               )}
             </Box>
           </AccordionSummary>
-          
+
           {hasChildren && (
             <AccordionDetails sx={{ p: 0 }}>
               {node.children!.map(child => renderTreeNode(child, depth + 1))}
@@ -277,14 +269,14 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
             Discovered URLs ({urls.length})
           </Typography>
           <Box display="flex" gap={1}>
-            <Chip 
+            <Chip
               icon={<CheckCircleIcon />}
               label={`${urls.length} URLs`}
               color="info"
               size="small"
             />
             {Object.keys(vulnerabilityCount).length > 0 && (
-              <Chip 
+              <Chip
                 icon={<WarningIcon />}
                 label={`${Object.values(vulnerabilityCount).reduce((sum, count) => sum + count, 0)} Vulnerabilities`}
                 color="error"
@@ -293,7 +285,7 @@ const UrlTreeView: React.FC<UrlTreeViewProps> = ({
             )}
           </Box>
         </Box>
-        
+
         <Box sx={{ flexGrow: 1, maxWidth: '100%', overflowY: 'auto' }}>
           {urlTree.map(node => renderTreeNode(node))}
         </Box>

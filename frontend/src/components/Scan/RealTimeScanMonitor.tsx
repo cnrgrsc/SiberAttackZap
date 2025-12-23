@@ -11,15 +11,7 @@ import {
   ListItemText,
   Chip,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Badge,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Table,
   TableBody,
   TableCell,
@@ -27,18 +19,12 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton,
-  Tooltip,
-  Grid,
-  Divider,
 } from '@mui/material';
 import {
-  ExpandMore as ExpandMoreIcon,
   Security as SecurityIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
   Info as InfoIcon,
-  BugReport as BugReportIcon,
   Speed as SpeedIcon,
   Timeline as TimelineIcon,
   Download as DownloadIcon,
@@ -47,7 +33,6 @@ import {
   NetworkCheck as NetworkCheckIcon,
   CheckCircle as CheckCircleIcon,
   Language as LanguageIcon,
-  GetApp as GetAppIcon,
 } from '@mui/icons-material';
 import socketService from '../../services/socketService';
 import scanService from '../../services/scanService';
@@ -100,7 +85,8 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
   scanId,
   onScanComplete,
   onClose,
-}) => {  const [progress, setProgress] = useState<ScanProgress>({
+}) => {
+  const [progress, setProgress] = useState<ScanProgress>({
     scanId,
     status: 'running',
     phase: 'setup',
@@ -189,7 +175,7 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -322,13 +308,13 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
             <Typography variant="h6">
               {progress.phase === 'completed' ? 'Scan Completed' : 'Scanning in Progress'}
             </Typography>
-            <Chip 
-              label={progress.status} 
+            <Chip
+              label={progress.status}
               color={progress.status === 'completed' ? 'success' : progress.status === 'failed' ? 'error' : 'primary'}
               variant="outlined"
             />
           </Box>
-          
+
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {getPhaseDescription(progress.phase)}
           </Typography>
@@ -347,15 +333,15 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
               <Typography variant="body2" color="text.secondary">Elapsed Time</Typography>
             </Box>
           </Box>          {/* Progress Bars - Enhanced for all phases */}
-          
+
           {/* Overall Workflow Progress */}
           {progress.workflow && (
             <Box sx={{ mb: 3 }}>
               <Typography variant="body2" sx={{ mb: 1 }}>
-                Overall Progress: {progress.workflow.currentPhase.replace('_', ' ').toUpperCase()} 
+                Overall Progress: {progress.workflow.currentPhase.replace('_', ' ').toUpperCase()}
                 ({progress.workflow.completedPhases}/{progress.workflow.totalPhases})
               </Typography>
-              <LinearProgress 
+              <LinearProgress
                 variant="determinate"
                 value={(progress.workflow.completedPhases / progress.workflow.totalPhases) * 100}
                 sx={{ height: 10, borderRadius: 5, mb: 2 }}
@@ -369,7 +355,7 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
               <Typography variant="body2" sx={{ mb: 1 }}>
                 {progress.phase === 'spider_scan' ? 'Traditional Spider Progress' : 'AJAX Spider Progress'}
               </Typography>
-              <LinearProgress 
+              <LinearProgress
                 variant={progress.subPhaseProgress ? "determinate" : "indeterminate"}
                 value={progress.subPhaseProgress || 0}
                 sx={{ height: 8, borderRadius: 4 }}
@@ -383,7 +369,7 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
           {progress.phase === 'active_scan' && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ mb: 1 }}>Vulnerability Testing Progress</Typography>
-              <LinearProgress 
+              <LinearProgress
                 variant={progress.subPhaseProgress ? "determinate" : "indeterminate"}
                 value={progress.subPhaseProgress || 0}
                 sx={{ height: 8, borderRadius: 4 }}
@@ -397,7 +383,7 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
           {progress.phase === 'forced_browse' && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ mb: 1 }}>Forced Browse Progress</Typography>
-              <LinearProgress 
+              <LinearProgress
                 variant={progress.subPhaseProgress ? "determinate" : "indeterminate"}
                 value={progress.subPhaseProgress || 0}
                 sx={{ height: 8, borderRadius: 4 }}
@@ -411,7 +397,7 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
           {progress.phase === 'passive_scan' && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" sx={{ mb: 1 }}>Passive Analysis Progress</Typography>
-              <LinearProgress 
+              <LinearProgress
                 variant="indeterminate"
                 sx={{ height: 8, borderRadius: 4 }}
               />
@@ -448,15 +434,15 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">Security Alerts Summary</Typography>
-              <Button 
-                size="small" 
+              <Button
+                size="small"
                 onClick={() => setShowAlerts(!showAlerts)}
                 startIcon={<VisibilityIcon />}
               >
                 {showAlerts ? 'Hide' : 'Show'} Details
               </Button>
             </Box>
-            
+
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
               {Object.entries(alertsByRisk).map(([risk, count]) => (
                 <Chip
@@ -514,8 +500,8 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6">Recently Discovered URLs</Typography>
-              <Button 
-                size="small" 
+              <Button
+                size="small"
                 onClick={() => setShowUrls(!showUrls)}
                 startIcon={<VisibilityIcon />}
               >
@@ -530,7 +516,7 @@ const RealTimeScanMonitor: React.FC<RealTimeScanMonitorProps> = ({
                     <ListItemIcon>
                       <SearchIcon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText 
+                    <ListItemText
                       primary={url}
                       primaryTypographyProps={{
                         variant: 'body2',

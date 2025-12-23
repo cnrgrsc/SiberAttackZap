@@ -23,7 +23,6 @@ import {
   CircularProgress,
   Tooltip,
   Avatar,
-  AvatarGroup,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -136,7 +135,7 @@ const GroupManagement: React.FC = () => {
 
   const handleAddUserToGroup = async (userId: string) => {
     if (!selectedGroup) return;
-    
+
     try {
       await api.post(`/admin/groups/${selectedGroup.id}/members`, {
         userIds: [userId],
@@ -151,7 +150,7 @@ const GroupManagement: React.FC = () => {
 
   const handleRemoveUserFromGroup = async (userId: string) => {
     if (!selectedGroup) return;
-    
+
     try {
       await api.delete(`/admin/groups/${selectedGroup.id}/members/${userId}`);
       setSuccess('Kullanıcı gruptan çıkarıldı');
@@ -284,80 +283,80 @@ const GroupManagement: React.FC = () => {
           <TableBody>
             {groups && groups.length > 0 ? (
               groups.map((group) => (
-              <TableRow key={group.id}>
-                <TableCell>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <GroupIcon fontSize="small" color="primary" />
-                    <Box>
-                      <Typography variant="body1" fontWeight="bold">
-                        {group.displayName}
-                      </Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {group.name}
-                      </Typography>
+                <TableRow key={group.id}>
+                  <TableCell>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <GroupIcon fontSize="small" color="primary" />
+                      <Box>
+                        <Typography variant="body1" fontWeight="bold">
+                          {group.displayName}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {group.name}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </TableCell>
-                <TableCell>{group.description || '-'}</TableCell>
-                <TableCell align="center">
-                  <Chip
-                    icon={<PersonIcon fontSize="small" />}
-                    label={group.memberCount}
-                    size="small"
-                    color={group.memberCount > 0 ? 'primary' : 'default'}
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={group.roleCount}
-                    size="small"
-                    color="success"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  {group.emailEnabled ? (
-                    <Tooltip title="Email bildirimleri aktif">
-                      <Chip
-                        icon={<EmailIcon fontSize="small" />}
-                        label="Aktif"
+                  </TableCell>
+                  <TableCell>{group.description || '-'}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      icon={<PersonIcon fontSize="small" />}
+                      label={group.memberCount}
+                      size="small"
+                      color={group.memberCount > 0 ? 'primary' : 'default'}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={group.roleCount}
+                      size="small"
+                      color="success"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    {group.emailEnabled ? (
+                      <Tooltip title="Email bildirimleri aktif">
+                        <Chip
+                          icon={<EmailIcon fontSize="small" />}
+                          label="Aktif"
+                          size="small"
+                          color="success"
+                        />
+                      </Tooltip>
+                    ) : (
+                      <Chip label="Pasif" size="small" color="default" />
+                    )}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Tooltip title="Üyeleri Yönet">
+                      <IconButton
                         size="small"
-                        color="success"
-                      />
+                        color="secondary"
+                        onClick={() => handleOpenUserDialog(group)}
+                      >
+                        <PeopleIcon fontSize="small" />
+                      </IconButton>
                     </Tooltip>
-                  ) : (
-                    <Chip label="Pasif" size="small" color="default" />
-                  )}
-                </TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Üyeleri Yönet">
-                    <IconButton
-                      size="small"
-                      color="secondary"
-                      onClick={() => handleOpenUserDialog(group)}
-                    >
-                      <PeopleIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Düzenle">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => handleOpenDialog(group)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Sil">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDeleteGroup(group)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
+                    <Tooltip title="Düzenle">
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => handleOpenDialog(group)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Sil">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteGroup(group)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
               ))
             ) : (
               <TableRow>

@@ -25,19 +25,17 @@ import {
   Build as BuildIcon,
   History as HistoryIcon,
   Assessment as ReportsIcon,
-  Settings as SettingsIcon,
   AccountCircle as AccountIcon,
   Logout as LogoutIcon,
   Email as EmailIcon,
   AdminPanelSettings as AdminIcon,
   PhoneAndroid as MobileIcon,
-  Person,
   MenuBook as DocumentationIcon,
   Biotech as TechnologyIcon,
   Speed as SpeedIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import NotificationDropdown from './NotificationDropdown';
+// NotificationDropdown import removed - using NotificationBell instead
 import { NotificationBell } from '../Notifications/NotificationBell';
 import authService from '../../services/authService';
 import ibbLogo from '../../assets/ibb-logo.jpg';
@@ -59,7 +57,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     canAccessWebScanning,
     canAccessMobileScanning,
     canAccessAdminPanel,
-    hasPermission
   } = usePermissions();
 
   // Dinamik menü - İzinlere göre filtrele
